@@ -2,8 +2,26 @@
 //이 다음으로 해야할 것은 우선 장비 아이템과 체력 아이템이다. 그후 이벤트 몇개 만들고 보스몹 만들기.
 //그 뒤에는 엔딩이겠다. 아마 스테이지 1만 만들듯. 
 
-//.v9
-//장비 아이템도 구현했다. 이제 이벤트만 만들자. 이벤트 1-2-3정도 만들고 보스몹 만들고 끝냅시다.
+//.v10
+//우선 드랍 아이템을 만들고 싶구나. 장비 드랍이 안되는 문제가 있다. 일단 패스.
+// 진짜로 우선 상인을 만들어 보자꾸나.
+//그 뒤 이벤트 2개만 만들자. 미믹 이벤트와 아오 장비추가를 무조건 해야하잖아.
+// 그리고 사람 만나는 이벤트. 1/2로 좋은사람 나쁜사람임. 좋은사람이면 지도공유로 진척도 올라가고 나쁜사람이면 뒤통수 맞고 hp까임
+// 먼저 선공도 가능. 그럼 피깍고 무조건 싸움.
+
+//1. 얻은 아이템이 같다면 얻지 않도록.
+//2. 골드를 먹을수 있도록.
+//3. 상인이 물건을 판다면 살수 있도록.
+
+//그리고 보스도 만들어 보자꾸나. 보스는 특수 스킬이 있으면 좋겠다.
+// 뭐 간단하게 반격으로 해보자. 속도가 빨라지고, 반격하는. 그럼 방어가 있어야 겠네.. 아. 에효.. 반격때는 공격을 하면 안되게. 이것만 하고 끝내자.
+//보스는 내일 만들고, 우선 장비 획득만 해보자.
+//아 ㅋㅋ 객체이름이 같아서 안됨 ㅋㅋ 병신. 장비도 얻는다. 이제.
+
+
+
+
+
 
 import chalk from 'chalk';
 import readlineSync from 'readline-sync';
@@ -11,7 +29,7 @@ import readlineSync from 'readline-sync';
 var logs = [];
 
 class Player {
-    constructor(name, hp = 100, mp = 100, atk = 10, def = 5, dodge = 5, speed = 3, critical = 20, level = 0, exp = 0, hit = 95) {
+    constructor(name, hp = 100, mp = 100, atk = 10, def = 5, dodge = 5, speed = 3, critical = 20, level = 0, exp = 0, hit = 95, gold = 200) {
         this.name = name;
         this.hp = hp; //체력
         this.mp = mp; // 마나
@@ -23,15 +41,10 @@ class Player {
         this.level = level; // 레벨
         this.exp = exp; //경험 
         this.hit = hit; //적중률
-        this.wear = {testArmor :{name:'천갑옷.', pldef:2}}
-        this.item = {
-            HPpotion: 1
-        }
-
-        this.Equipment = {
-            ShabbyClothArmor : {name:'허름한 천갑옷.', pldef:1} 
-        }
-
+        this.gold = gold;
+        this.wear = { ClothArmor: { name: '천갑옷.', pldef: 2, rarity: 1 } }
+        this.item = { HPpotion: 1, MPpotion: 1 }
+        this.Equipment = {}
         this.skills = {
             effects: () => {
                 const mpCost = 30; // 스킬 사용 시 마나 소모량
@@ -50,11 +63,8 @@ class Player {
     }
 }
 
-
-
-
 class Monster {
-    constructor(name, hp = 100, mp = 100, atk = 10, def = 5, dodge = 5, speed = 2, critical = 20, level = 0, exp = 0, hit = 95, skills = {}) {
+    constructor(name, hp = 100, mp = 100, atk = 10, def = 5, dodge = 5, speed = 2, critical = 20, level = 0, exp = 0, hit = 95, gold = 0, item = {}, Equipment = {}, skills = {}) {
         this.name = name;
         this.hp = hp; //체력
         this.mp = mp; // 마나
@@ -66,6 +76,9 @@ class Monster {
         this.level = level; // 레벨
         this.exp = exp; //경험 
         this.hit = hit; //적중률
+        this.gold = gold;
+        this.item = item
+        this.Equipment = Equipment
         this.skills = skills; // 몬스터가 배울 스킬들
     }
 
@@ -81,8 +94,6 @@ class Monster {
         return 0;
     }
 }
-
-
 
 function isHit(attacker, defender) {
     const hitChance = Math.random() * 100;
@@ -168,26 +179,32 @@ async function intro() {
 async function event1(stage, player) {
     let addprogress = 0;
 
-    let Goblin = new Monster('Goblin', 30, 0, 9, 5, 0, 1, 20, 1, 5, 100, {
+    let Goblin = new Monster('Goblin', 30, 0, 9, 5, 0, 1, 20, 1, 5, 100, 20, { HPpotion: 1, MPpotion: 1 }, { ShabbyClothArmor: { name: '허름한 천갑옷.', pldef: 1, rarity: 1 } }, {
         slash: function () {
             return { skillName: "slash", damage: this.atk };
         }
     });
-    let Skeleton = new Monster('Skeleton', 50, 0, 15, 10, 0, 1, 20, 1, 20, 100, {
+    let Skeleton = new Monster('Skeleton', 50, 0, 15, 10, 0, 1, 20, 1, 20, 100, 100, { HPpotion: 1, MPpotion: 1 }, { Solidbonearmor: { name: '단단한 뼈갑옷.', pldef: 3, rarity: 3 } }, {
         boneThrow: function () {
             return { skillName: "boneThrow", damage: this.atk }
+        }
+    });
+    let slime = new Monster('slime', 10, 0, 8, 0, 0, 1, 20, 1, 20, 100, 0, {}, {}, {
+        slimeattack: function () {
+            return { skillName: "slimeattack", damage: this.atk }
         }
     });
 
     let monsters = [Goblin, Skeleton];
     const playerWon = await battle(stage, player, monsters);
+
     if (!playerWon) {
         gameover(stage, false); // 엔딩 1
     } else {
-        addprogress = 50; // 보상과 진척도 획득.
+        addprogress = 50;
     }
     return addprogress;
-};
+}
 
 function updateDisplay(player, monsters) {
     console.clear();
@@ -200,6 +217,14 @@ function updateDisplay(player, monsters) {
     logs.forEach((log) => console.log(log));
 }
 
+function playereDisplay(player) {
+    console.clear();
+    console.log(`Player: ${player.name}, HP: ${player.hp}, MP: ${player.mp}, def:${player.def},
+        gold: ${player.gold}`);
+
+    while (logs.length > 4) { logs.shift() };
+    logs.forEach((log) => console.log(log));
+}
 
 async function playerAttackmethod(player, monsters) {
 
@@ -299,6 +324,36 @@ async function monsterAttackmethod(player, monster) {
     player.hp -= dealtDamage;  // Correctly reduce player's HP
 }
 
+async function getItem(player, monsters) {
+    monsters.forEach(monster => {
+        player.gold += monster.gold;
+
+        // 아이템 처리
+        for (let item in monster.item) {
+            if (player.item[item]) {
+                player.item[item] += monster.item[item];
+            } else {
+                player.item[item] = monster.item[item];
+            }
+        }
+
+        for (let equipment in monster.Equipment) {
+            const rarity = monster.Equipment[equipment].rarity;
+            const dropRate = 1 / rarity;
+
+
+            if (Math.random() < dropRate) {
+                if (player.Equipment.hasOwnProperty(equipment)) {
+                    console.log(`${equipment} already in player's inventory.`);
+                } else {
+                    player.Equipment[equipment] = monster.Equipment[equipment];
+                    console.log(`${equipment} added to player's equipment.`);
+                }
+            }
+        }
+    });
+}
+
 async function battle(stage, player, monsters) {
     const orderOfBattle = [{ ...player, type: 'player' }];
 
@@ -328,11 +383,11 @@ async function battle(stage, player, monsters) {
         }
     }
 
-
     logs = [];
     if (player.hp <= 0) {
         return false;
     } else {
+        getItem(player, monsters);
         return true;
     }
 
@@ -352,10 +407,9 @@ async function useItem(player, itemName) {
     }
 }
 
-
 async function itemstage(player) {
     while (true) {
-        
+
         console.log(`무엇을 사용할까.`);
 
         const items = Object.keys(player.item);
@@ -372,7 +426,7 @@ async function itemstage(player) {
         const itemName = items[itemNumber - 1];
 
         if (itemName) {
-           await useItem(player, itemName);
+            await useItem(player, itemName);
         } else {
             console.log("잘못된 선택입니다. 다시 선택해 주세요.");
             console.clear();
@@ -380,50 +434,47 @@ async function itemstage(player) {
     }
 }
 
-async function clothEquipment(player){
+async function clothEquipment(player) {
     const equipment = Object.keys(player.wear)[0];
-   if (!equipment) {
+    if (!equipment) {
         console.log('벗을 장비가 없습니다.');
     } else {
         const item = player.wear[equipment];
         player.def -= item.pldef;
-        
+
         player.Equipment[equipment] = item;
-        
+
         delete player.wear[equipment];
-        
+
         console.log(`${item.name}을 벗었습니다. 방어력이 ${item.pldef}만큼 감소했습니다.`);
     }
 
 
 }
 
-
-
 async function useEquipment(player, EquipmentName) {
     if (player.Equipment[EquipmentName]) {
         if (Object.keys(player.wear).length > 0) {
-            await clothEquipment(player); 
+            await clothEquipment(player);
         }
-        
+
         const newItem = player.Equipment[EquipmentName];
-        
+
         player.def += newItem.pldef;
-        player.wear[EquipmentName] = newItem; 
-        
+        player.wear[EquipmentName] = newItem;
+
         delete player.Equipment[EquipmentName];
-        
+
         console.log(`${newItem.name}을 착용했습니다. 방어력이 ${newItem.pldef}만큼 증가했습니다.`);
     } else {
         console.log("해당 장비가 없습니다.");
     }
 }
 
-
 async function Equipmentstage(player) {
 
     while (true) {
-        
+
         console.log(`\n무엇을 입을까.`);
 
         const Equipments = Object.keys(player.Equipment);
@@ -442,7 +493,7 @@ async function Equipmentstage(player) {
         if (EquipmentName) {
             console.clear();
             await useEquipment(player, EquipmentName);
-            
+
         } else {
             console.clear();
             console.log("잘못된 선택입니다. 다시 선택해 주세요.");
@@ -450,13 +501,11 @@ async function Equipmentstage(player) {
     }
 }
 
-
-
-
 async function main(player, stage) {
     let progress = 0;
     while (progress < 100) {
         console.clear()
+        playereDisplay(player);
         console.log(`던전 ${stage} 층`);
         console.log(`탐험도 : ${progress}`);
         console.log(`1.길을 찾는다. 2.아이템을 사용한다. 3.장비를 변경한다.`)
@@ -468,7 +517,9 @@ async function main(player, stage) {
             switch (choice) {
                 case '1':
                     console.clear;
-                    progress += await event1(stage, player);
+                    const events = [event1];// 여기에 이벤트 개수 추가.
+                    const randomEvent = events[Math.floor(Math.random() * events.length)];
+                    progress +=await randomEvent(stage, player);
                     validChoice = true;
                     break;
                 case '2':
@@ -486,9 +537,7 @@ async function main(player, stage) {
             }
         }
     }
-}
-
-
+} //보스 스테이지 추가 안함.
 
 export async function startGame() {
     let name;
@@ -501,6 +550,3 @@ export async function startGame() {
 }
 
 startGame()
-
-//할일 1. 몬스터 전투, 스킬 적용, 2. 배틀시스템 정리 3. 장비 아이템 적용. 4. 사용아이템. 스킬추가와 회복. 적용
-//5. 보스 잡고 다음으로 넘어가는거. 6. 특수 이벤트 적용. 7. 결말.
