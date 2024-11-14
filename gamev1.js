@@ -5,15 +5,15 @@
 // 그리고 사람 만나는 이벤트. 1/2로 좋은사람 나쁜사람임. 좋은사람이면 지도공유로 진척도 올라가고 나쁜사람이면 뒤통수 맞고 hp까임
 // 먼저 선공도 가능. 그럼 피깍고 무조건 싸움.
 
-//1. 얻은 아이템이 같다면 얻지 않도록.
-//2. 골드를 먹을수 있도록.
 //3. 상인이 물건을 판다면 살수 있도록.
 
 //그리고 보스도 만들어 보자꾸나. 보스는 특수 스킬이 있으면 좋겠다.
 // 뭐 간단하게 반격으로 해보자. 속도가 빨라지고, 반격하는. 그럼 방어가 있어야 겠네.. 아. 에효.. 반격때는 공격을 하면 안되게. 이것만 하고 끝내자.
 //보스는 내일 만들고.
 
-//.v11 1. 창과 대사 정리중... 정리 끝.
+//.v12 진짜로 이벤트 만들것. 다만드니까 하기 싫네..
+//이벤트 만드는 도중 배틀에 플레이어 공격 선택이 2인용 이더라 ㅋㅋ
+//고치기 귀찮네..
 
 
 import chalk from 'chalk';
@@ -164,6 +164,14 @@ async function intro() {
 }//
 
 async function event1(stage, player) {
+
+    const event1dialogues1 = [
+        `당신은 던전의 어두운 길을 더듬거리며 조심스레 전진하던 중, 갑작스러운 기척을 느꼈다. 
+        순간, 음산한 기운과 함께 괴물들이 당신 앞에 모습을 드러냈다. 
+        피할 수도 없는 상황에서, 당신은 싸울 준비를 한다. 이곳에서 살아남기 위해선 반드시 이겨야만 한다.`
+    ];
+    await showDialogue(event1dialogues1, 1000);
+
     let addprogress = 0;
 
     let Goblin = new Monster('Goblin', 30, 0, 9, 5, 0, 1, 20, 1, 5, 100, 20, { HPpotion: 1, MPpotion: 1 }, { ShabbyClothArmor: { name: '허름한 천갑옷', pldef: 1, rarity: 1 } }, {
@@ -192,9 +200,111 @@ async function event1(stage, player) {
     }
     return addprogress;
 }
-async function event2(stage, player){
+
+async function event2(stage, player) {
+    const event2dialogues1 = [`당신은 던전의 길을 찾던 중. 인기척에 몸을 숨겼다.
+던전에 들어온 사람들 인가 보다.
+그들과 접촉하면 던전의 지리에 대해 거래를 할 수 있을지도 모른다.`];
+    await showDialogue(event2dialogues1, 1000);
+    console.log(`1.지나갈 때까지 기다린다. 2.대화를 시도한다. 3.선공을 한다.`)
+    let addprogress = 0;
+    let validChoice = false;
+    while (!validChoice) {
+        const choice = await readlineSync.question();
+
+        switch (choice) {
+            case '1':
+                console.clear;
+                const event2dialogues2 = [`저들이 어떤이인지 알아보는건 좋은일이 아니다.
+이곳은 던전이고, 오로지 경쟁자만 있다.
+
+당신은 인기척이 없어질 때까지 기다렸다.`];
+                await showDialogue(event2dialogues1, 1000);
+                validChoice = true;
+                addprogress = 50;
+                break;
+            case '2':
+                console.clear;
+                const randomnum = Math.random();
+                if (randomnum < 1 / 3) {
+                    const event2dialogues3 = [`상대는 당신을 보자 친절히 웃으며 인사한다.
+당신은 속으로 경계하며, 던전의 정보를 아냐고 물었고, 놀랍게도 상대는 던전의 정보에 대해 친절히 알려주고 떠났다.`];
+                    await showDialogue(event2dialogues3, 1000);
+                } else {
+                    const event2dialogues4 = [`상대는 당신을 보자 비릿히 웃으며 다가온다. 
+당신은 직감적으로 싸워야 함을 알았다.`]
+                    await showDialogue(event2dialogues3, 1000);
+
+                    let badAdventurer = new Monster('모험가', 100, 0, 30, 10, 0, 2, 20, 1, 5, 100, 200, { HPpotion: 1, MPpotion: 1 }, { plateArmor: { name: '단단한 판금갑옷', pldef: 5, rarity: 5 } }, {
+                        slash: function () {
+                            return { skillName: "powerful attack", damage: this.atk };
+                        }
+                    });
+
+                    let monsters = [badAdventurer];
+
+                    const playerWon = await battle(stage, player, monsters);
+
+                    if (!playerWon) {
+                        gameover(stage, false); // 엔딩 2
+                    } else {
+                        addprogress = 20;
+                    }
+                }
+                validChoice = true;
+                break;
+            case '3':
+                console.clear;
+                const event2dialogues4 = [`저들은 경쟁자고, 잠재적인 적이다. 언젠간 붙이칠 운명이니. 
+유리한 지금 공격하기로 한다.`];
+                await showDialogue(event2dialogues4, 1000);
+                const event2dialogues5 = [`퍽!.. 뭐 뭐야!;
+                                            
+상대를 일격에 죽이지 못했으나 처리하기 쉬운 환경이 되었다. 당신은 마무리 짓기위해 달려들었다.`];
+                await showDialogue(event2dialogues5, 1000);
+                let hurtAdventurer = new Monster('상처입은 모험가', 30, 0, 7, 2, 0, 1, 0, 1, 5, 30, 200, { HPpotion: 1, MPpotion: 1 }, { BloodyplateArmor: { name: '피묻은 판금갑옷', pldef: 3, rarity: 3 } }, {
+                    slash: function () {
+                        return { skillName: "weak attackk", damage: this.atk };
+                    }
+                });
+                let monsters = [hurtAdventurer];
+                const playerWon = await battle(stage, player, monsters);
+
+                    if (!playerWon) {
+                        gameover(stage, false); // 엔딩 2
+                    } else {
+                        addprogress = 20;
+                    }
+                validChoice = true;
+                break;
+            default:
+            //logs.push(chalk.red('올바른 선택을 하세요.'));
+        }
+    }
+    return addprogress;
+    //무시하고 간다. //대화를 시도한다. // 선빵필승.
+}
+
+async function event3(stage, player) {
+    const event3dialogues1 = [`지다가다 구석진 곳에 상자가 있다.
+        사람이 보기 힘든 곳이라 당신이 처음 발견한것 같다.`];
+    await showDialogue(event3dialogues1, 1000);
+
+    //무시하고 간다.   //상자를 연다.
 
 }
+
+async function event4(stage, player) {
+    const event4dialogues1 = [`던전을 지나던중 수상하게 생긴 사람이 말을 건다.
+        물건 사고 가시지요. 던전을 탐험하신다면 필요하실겁니다.`];
+    //상인.
+    await showDialogue(event4dialogues1, 1000);
+}
+
+async function event5(stage, player) {
+
+}
+
 
 
 function updateDisplay(player, monsters) {
@@ -226,12 +336,15 @@ async function playerAttackmethod(player, monsters) {
         const choice = await readlineSync.question('당신의 선택은? ');
         switch (choice) {
             case '1': // 일반공격
-                console.log(chalk.green(`1. ${monsters[0].name} 2. ${monsters[1].name}`));
-                const target = await readlineSync.question('공격할 몬스터를 선택하세요: ');
+            monsters.forEach((monster, index) => {
+                console.log(chalk.green(`${index + 1}. ${monster.name}`));
+            });
+            const targetIndex = await readlineSync.question('공격할 몬스터를 선택하세요: ');
+            const target = monsters[parseInt(targetIndex) - 1];
 
-                let damage;
+                
                 if (target === '1' && monsters[0].hp > 0) {
-                    damage = player.attack(player.atk);
+                    let damage = player.attack(player.atk);
                     const dealtDamage = await damageCalculation(player, monsters[0], damage);
                     monsters[0].hp -= dealtDamage;
                     validChoice = true;
@@ -288,7 +401,7 @@ async function playerAttackmethod(player, monsters) {
                 updateDisplay(player, monsters)
         }
     }
-}//
+}// 아 이거 무조건 2명용이잖아 왜 이렇게 했어. 아 초반용 시치.
 
 async function monsterAttackmethod(player, monster) {
     if (monster.hp <= 0) return;
@@ -350,7 +463,7 @@ async function getItem(player, monsters) {
         readlineSync.question('\n다음으로 넘어가기');
         console.clear()
     });
- 
+
 }//
 
 async function battle(stage, player, monsters) {
@@ -400,7 +513,7 @@ async function useItem(player, itemName) {
                 player.item[itemName]--;
                 logs.push(chalk.green(`${player.name} 의 hp가 회복됬다.`));
                 break;
-                case 'MPpotion':
+            case 'MPpotion':
                 player.hp = Math.min(player.mp + 50, 100);
                 player.item[itemName]--;
                 logs.push(chalk.green(`${player.name} 의 mp가 회복됬다.`));
@@ -523,9 +636,9 @@ async function main(player, stage) {
             switch (choice) {
                 case '1':
                     console.clear;
-                    const events = [event1];// 여기에 이벤트 개수 추가.
+                    const events = [event2];// 여기에 이벤트 개수 추가.
                     const randomEvent = events[Math.floor(Math.random() * events.length)];
-                    progress +=await randomEvent(stage, player);
+                    progress += await randomEvent(stage, player);
                     validChoice = true;
                     break;
                 case '2':
