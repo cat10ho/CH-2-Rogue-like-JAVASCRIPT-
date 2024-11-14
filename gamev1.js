@@ -1,9 +1,10 @@
-//2024-11-13
-// 7v. 완벽하게 선택지도 끝났다. 나는야 천재 전투가 끝나고 로그 초기화 된다. 정보 함수로 로그출력도 됨.
-// 이제 다음으로 가자. 나중에 정리해보면 되지. 좀 더럽긴 해.
-
+//2024-11-14
 //이 다음으로 해야할 것은 우선 장비 아이템과 체력 아이템이다. 그후 이벤트 몇개 만들고 보스몹 만들기.
 //그 뒤에는 엔딩이겠다. 아마 스테이지 1만 만들듯. 
+
+//.v8
+//우선 아이템 사용은 구현함.
+//장비 사용과. 언제나 나의 상태를 볼수 있는창이 있으면 좋겠다. hp가 회복됬는지 안됬는지 알수가 없네.
 
 import chalk from 'chalk';
 import readlineSync from 'readline-sync';
@@ -34,11 +35,19 @@ class Player {
                 };
             }
         };
+
+        this.item = {
+            HPpotion: 1
+        }
     }
+
     attack(atk) {
         return atk
     }
 }
+
+
+
 
 class Monster {
     constructor(name, hp = 100, mp = 100, atk = 10, def = 5, dodge = 5, speed = 2, critical = 20, level = 0, exp = 0, hit = 95, skills = {}) {
@@ -68,6 +77,8 @@ class Monster {
         return 0;
     }
 }
+
+
 
 function isHit(attacker, defender) {
     const hitChance = Math.random() * 100;
@@ -151,15 +162,16 @@ async function intro() {
 }
 
 async function event1(stage, player) {
-    let addprogress=0;
+    let addprogress = 0;
 
     let Goblin = new Monster('Goblin', 30, 0, 9, 5, 0, 1, 20, 1, 5, 100, {
-        slash: function() {
+        slash: function () {
             return { skillName: "slash", damage: this.atk };
         }
     });
     let Skeleton = new Monster('Skeleton', 50, 0, 15, 10, 0, 1, 20, 1, 20, 100, {
-        boneThrow: function() { return {skillName: "boneThrow", damage:this.atk} 
+        boneThrow: function () {
+            return { skillName: "boneThrow", damage: this.atk }
         }
     });
 
@@ -168,7 +180,7 @@ async function event1(stage, player) {
     if (!playerWon) {
         gameover(stage, false); // 엔딩 1
     } else {
-        addprogress=50; // 보상과 진척도 획득.
+        addprogress = 50; // 보상과 진척도 획득.
     }
     return addprogress;
 };
@@ -180,7 +192,7 @@ function updateDisplay(player, monsters) {
         console.log(`Monster ${index + 1}: ${monster.name}, HP: ${monster.hp}`);
     });
 
-    while(logs.length>4){logs.shift()};
+    while (logs.length > 4) { logs.shift() };
     logs.forEach((log) => console.log(log));
 }
 
@@ -195,7 +207,7 @@ async function playerAttackmethod(player, monsters) {
             case '1': // 일반공격
                 console.log(chalk.green(`1. ${monsters[0].name} 2. ${monsters[1].name}`));
                 const target = await readlineSync.question('공격할 몬스터를 선택하세요: ');
-    
+
                 let damage;
                 if (target === '1' && monsters[0].hp > 0) {
                     damage = player.attack(player.atk);
@@ -209,26 +221,26 @@ async function playerAttackmethod(player, monsters) {
                     validChoice = true;
                 } else {
                     logs.push(chalk.red('올바른 몬스터를 선택하세요.'));
-                updateDisplay(player, monsters)
+                    updateDisplay(player, monsters)
                 }
                 break;
-    
+
             case '2': // 스킬 사용
                 const skillList = Object.keys(player.skills).map((skill, index) => `${index + 1}. ${skill}`).join(' ');
                 console.log(chalk.green(`\n스킬 선택: ${skillList}`));
                 const skillChoice = await readlineSync.question('사용할 스킬을 선택하세요 (번호): ');
-    
+
                 const skillIndex = parseInt(skillChoice) - 1; // 번호 입력을 인덱스로 변환
                 if (skillIndex >= 0 && skillIndex < Object.keys(player.skills).length) {
                     const skill = player.skills[Object.keys(player.skills)[skillIndex]];
                     const { mpCost, damage } = skill(); // 스킬의 마나 소모량을 가져옴
-    
+
                     if (player.mp >= mpCost) {
                         player.mp -= mpCost; // 마나 차감
                         console.log(chalk.green(`\n스킬이 발동되었습니다!`));
                         console.log(chalk.green(`1. ${monsters[0].name} 2. ${monsters[1].name}`));
                         const target = await readlineSync.question('공격할 몬스터를 선택하세요: ');
-    
+
                         let dealtDamage;
                         if (target === '1' && monsters[0].hp > 0) {
                             dealtDamage = await damageCalculation(player, monsters[0], damage);
@@ -248,7 +260,7 @@ async function playerAttackmethod(player, monsters) {
                     logs.push(chalk.red('잘못된 번호입니다.'));
                 }
                 break;
-    
+
             default:
                 logs.push(chalk.red('올바른 선택을 하세요.'));
 
@@ -259,7 +271,7 @@ async function playerAttackmethod(player, monsters) {
 
 async function monsterAttackmethod(player, monster) {
     if (monster.hp <= 0) return;
-    
+
     let selectedSkill;
     const skillNames = monster.skills ? Object.keys(monster.skills) : [];
     if (skillNames.length > 0) {
@@ -298,7 +310,7 @@ async function battle(stage, player, monsters) {
         }
         return b.speed - a.speed; // 속도에 따라 내림차순 정렬
     });
-    
+
     while (player.hp > 0 && monsters.some(monster => monster.hp > 0)) { // 몬스터가 살아있는 동안
         updateDisplay(player, monsters);
 
@@ -322,16 +334,53 @@ async function battle(stage, player, monsters) {
 
 }
 
+async function useItem(player, itemName) {
+    if (player.item[itemName] > 0) {
+        switch (itemName) {
+            case 'HPpotion':
+                player.hp = Math.min(player.hp + 50, 100);
+                player.item[itemName]--;
+                console.log(`${player.name} used an HP potion! HP is now ${player.name}.`);
+                break;
+        }
+    } else {
+        console.log(`아이템 없음.`);
+    }
+}
 
 
+async function itemstage(player) {
+    while (true) {
+        console.clear;
+        console.log(`무엇을 사용할까.`);
 
+        const items = Object.keys(player.item);
+        const itemList = items.map((item, index) => `${index + 1}. ${item} (x${player.item[item]})`).join(' ') + ` ${items.length + 1}. 되돌아 가기`;
+        console.log(chalk.green(`\n아이템 선택: ${itemList}`));
+
+        const itemNumber = parseInt(await readlineSync.question('사용할 아이템을 선택해 주세요: '), 10);
+
+        if (itemNumber === items.length + 1) {
+            console.log("선택을 취소하고 돌아갑니다.");
+            break; // Exit the loop if "Go Back" is selected
+        }
+
+        const itemName = items[itemNumber - 1];
+
+        if (itemName) {
+            useItem(player, itemName);
+        } else {
+            console.log("잘못된 선택입니다. 다시 선택해 주세요.");
+        }
+    }
+}
 
 
 
 
 async function main(player, stage) {
     let progress = 0;
-    while(progress<100){
+    while (progress < 100) {
         console.clear()
         console.log(`던전 ${stage} 층`);
         console.log(`탐험도 : ${progress}`);
@@ -340,22 +389,25 @@ async function main(player, stage) {
         let validChoice = false;
         while (!validChoice) {
             const choice = await readlineSync.question();
-    
+
             switch (choice) {
                 case '1':
+                    console.clear;
                     progress += await event1(stage, player);
                     validChoice = true;
                     break;
-                // case '2':
-                //     //아이템 창으로. 회복아이템 사용 가능.
-                //     validChoice = true;
-                //     break;
-                // case '3':
-                //     //장비 변경 창으로.
-                //     validChoice = true;
-                //     break;
+                case '2':
+                    console.clear;
+                    await itemstage(player)
+                    validChoice = true;
+                    break;
+                case '3':
+                    console.clear;
+                    await Equipmentstage(player)
+                    validChoice = true;
+                    break;
                 default:
-                    logs.push(chalk.red('올바른 선택을 하세요.'));
+                //logs.push(chalk.red('올바른 선택을 하세요.'));
             }
         }
     }
@@ -377,4 +429,3 @@ startGame()
 
 //할일 1. 몬스터 전투, 스킬 적용, 2. 배틀시스템 정리 3. 장비 아이템 적용. 4. 사용아이템. 스킬추가와 회복. 적용
 //5. 보스 잡고 다음으로 넘어가는거. 6. 특수 이벤트 적용. 7. 결말.
-
