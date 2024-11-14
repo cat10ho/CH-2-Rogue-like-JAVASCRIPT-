@@ -1,8 +1,9 @@
-//해결할 문제점. 1.체력이 0이되면 공격하지 않기. 2. 선택이 되지않게. 다시 돌리기. 이건 while문 쓰면됨.
-// 1번만 해결되면 배틀문제는 끝날듯.
-//문제점 발견. 1. 몬스터 hp랑 불러온 unithp랑 별개로 지정된듯. 그래서 몬스터 다 까여도 유닛은 그대로라 그럼.
-// 해결. 타입도 개별적으로 넣어줌.
-// 드디어 끝남.
+//2024-11-13
+// 7v. 완벽하게 선택지도 끝났다. 나는야 천재 전투가 끝나고 로그 초기화 된다. 정보 함수로 로그출력도 됨.
+// 이제 다음으로 가자. 나중에 정리해보면 되지. 좀 더럽긴 해.
+
+//이 다음으로 해야할 것은 우선 장비 아이템과 체력 아이템이다. 그후 이벤트 몇개 만들고 보스몹 만들기.
+//그 뒤에는 엔딩이겠다. 아마 스테이지 1만 만들듯. 
 
 import chalk from 'chalk';
 import readlineSync from 'readline-sync';
@@ -14,7 +15,7 @@ class Player {
         this.name = name;
         this.hp = hp; //체력
         this.mp = mp; // 마나
-        this.atk = atk; // 공격력
+        this.atk = atk; // 공격력1
         this.def = def; // 방어력
         this.dodge = dodge; // 회피력
         this.speed = speed; //속도
@@ -152,12 +153,12 @@ async function intro() {
 async function event1(stage, player) {
     let addprogress=0;
 
-    let Goblin = new Monster('Goblin', 30, 0, 9, 5, 0, 1, 20, 1, 5, 90, {
+    let Goblin = new Monster('Goblin', 30, 0, 9, 5, 0, 1, 20, 1, 5, 100, {
         slash: function() {
             return { skillName: "slash", damage: this.atk };
         }
     });
-    let Skeleton = new Monster('Skeleton', 50, 0, 15, 10, 0, 1, 20, 1, 20, 50, {
+    let Skeleton = new Monster('Skeleton', 50, 0, 15, 10, 0, 1, 20, 1, 20, 100, {
         boneThrow: function() { return {skillName: "boneThrow", damage:this.atk} 
         }
     });
@@ -172,65 +173,87 @@ async function event1(stage, player) {
     return addprogress;
 };
 
+function updateDisplay(player, monsters) {
+    console.clear();
+    console.log(`Player: ${player.name}, HP: ${player.hp}`);
+    monsters.forEach((monster, index) => {
+        console.log(`Monster ${index + 1}: ${monster.name}, HP: ${monster.hp}`);
+    });
+
+    while(logs.length>4){logs.shift()};
+    logs.forEach((log) => console.log(log));
+}
+
+
 async function playerAttackmethod(player, monsters) {
-    console.log(chalk.green(`\n1. 일반공격 2. 스킬을 사용한다.`));
-    const choice = await readlineSync.question('당신의 선택은? ');
+
+    let validChoice = false; //옳은 선택지 넣으면 바뀜
+    while (!validChoice) {
+        console.log(chalk.green(`\n1. 일반공격 2. 스킬을 사용한다.`));
+        const choice = await readlineSync.question('당신의 선택은? ');
+        switch (choice) {
+            case '1': // 일반공격
+                console.log(chalk.green(`1. ${monsters[0].name} 2. ${monsters[1].name}`));
+                const target = await readlineSync.question('공격할 몬스터를 선택하세요: ');
     
-    switch (choice) {
-        case '1': // 일반공격
-            console.log(chalk.green(`1. ${monsters[0].name} 2. ${monsters[1].name}`));
-            const target = await readlineSync.question('공격할 몬스터를 선택하세요: ');
-
-            let damage;
-            if (target === '1' && monsters[0].hp > 0) {
-                damage = player.attack(player.atk);
-                const dealtDamage = await damageCalculation(player, monsters[0], damage);
-                monsters[0].hp -= dealtDamage;
-            } else if (target === '2' && monsters[1].hp > 0) {
-                damage = player.attack(player.atk);
-                const dealtDamage = await damageCalculation(player, monsters[1], damage);
-                monsters[1].hp -= dealtDamage;
-            } else {
-                logs.push(chalk.red('올바른 몬스터를 선택하세요.'));
-            }
-            break;
-
-        case '2': // 스킬 사용
-            const skillList = Object.keys(player.skills).map((skill, index) => `${index + 1}. ${skill}`).join(' ');
-            console.log(chalk.green(`\n스킬 선택: ${skillList}`));
-            const skillChoice = await readlineSync.question('사용할 스킬을 선택하세요 (번호): ');
-
-            const skillIndex = parseInt(skillChoice) - 1; // 번호 입력을 인덱스로 변환
-            if (skillIndex >= 0 && skillIndex < Object.keys(player.skills).length) {
-                const skill = player.skills[Object.keys(player.skills)[skillIndex]];
-                const { mpCost, damage } = skill(); // 스킬의 마나 소모량을 가져옴
-
-                if (player.mp >= mpCost) {
-                    player.mp -= mpCost; // 마나 차감
-                    console.log(chalk.green(`\n스킬이 발동되었습니다!`));
-                    console.log(chalk.green(`1. ${monsters[0].name} 2. ${monsters[1].name}`));
-                    const target = await readlineSync.question('공격할 몬스터를 선택하세요: ');
-
-                    let dealtDamage;
-                    if (target === '1' && monsters[0].hp > 0) {
-                        dealtDamage = await damageCalculation(player, monsters[0], damage);
-                        monsters[0].hp -= dealtDamage;
-                    } else if (target === '2' && monsters[1].hp > 0) {
-                        dealtDamage = await damageCalculation(player, monsters[1], damage);
-                        monsters[1].hp -= dealtDamage;
+                let damage;
+                if (target === '1' && monsters[0].hp > 0) {
+                    damage = player.attack(player.atk);
+                    const dealtDamage = await damageCalculation(player, monsters[0], damage);
+                    monsters[0].hp -= dealtDamage;
+                    validChoice = true;
+                } else if (target === '2' && monsters[1].hp > 0) {
+                    damage = player.attack(player.atk);
+                    const dealtDamage = await damageCalculation(player, monsters[1], damage);
+                    monsters[1].hp -= dealtDamage;
+                    validChoice = true;
+                } else {
+                    logs.push(chalk.red('올바른 몬스터를 선택하세요.'));
+                updateDisplay(player, monsters)
+                }
+                break;
+    
+            case '2': // 스킬 사용
+                const skillList = Object.keys(player.skills).map((skill, index) => `${index + 1}. ${skill}`).join(' ');
+                console.log(chalk.green(`\n스킬 선택: ${skillList}`));
+                const skillChoice = await readlineSync.question('사용할 스킬을 선택하세요 (번호): ');
+    
+                const skillIndex = parseInt(skillChoice) - 1; // 번호 입력을 인덱스로 변환
+                if (skillIndex >= 0 && skillIndex < Object.keys(player.skills).length) {
+                    const skill = player.skills[Object.keys(player.skills)[skillIndex]];
+                    const { mpCost, damage } = skill(); // 스킬의 마나 소모량을 가져옴
+    
+                    if (player.mp >= mpCost) {
+                        player.mp -= mpCost; // 마나 차감
+                        console.log(chalk.green(`\n스킬이 발동되었습니다!`));
+                        console.log(chalk.green(`1. ${monsters[0].name} 2. ${monsters[1].name}`));
+                        const target = await readlineSync.question('공격할 몬스터를 선택하세요: ');
+    
+                        let dealtDamage;
+                        if (target === '1' && monsters[0].hp > 0) {
+                            dealtDamage = await damageCalculation(player, monsters[0], damage);
+                            monsters[0].hp -= dealtDamage;
+                            validChoice = true;
+                        } else if (target === '2' && monsters[1].hp > 0) {
+                            dealtDamage = await damageCalculation(player, monsters[1], damage);
+                            monsters[1].hp -= dealtDamage;
+                            validChoice = true;
+                        } else {
+                            logs.push(chalk.red('올바른 몬스터를 선택하세요.'));
+                        }
                     } else {
-                        logs.push(chalk.red('올바른 몬스터를 선택하세요.'));
+                        logs.push(chalk.red('마나가 부족합니다.'));
                     }
                 } else {
-                    logs.push(chalk.red('마나가 부족합니다.'));
+                    logs.push(chalk.red('잘못된 번호입니다.'));
                 }
-            } else {
-                logs.push(chalk.red('잘못된 번호입니다.'));
-            }
-            break;
+                break;
+    
+            default:
+                logs.push(chalk.red('올바른 선택을 하세요.'));
 
-        default:
-            logs.push(chalk.red('올바른 선택을 하세요.'));
+                updateDisplay(player, monsters)
+        }
     }
 }
 
@@ -277,14 +300,7 @@ async function battle(stage, player, monsters) {
     });
     
     while (player.hp > 0 && monsters.some(monster => monster.hp > 0)) { // 몬스터가 살아있는 동안
-        console.clear();
-        console.log(`Player: ${player.name}, HP: ${player.hp}`);
-        monsters.forEach((monster, index) => {
-            console.log(`Monster ${index + 1}: ${monster.name}, HP: ${monster.hp}`);
-        });
-
-        while(logs.length>4){logs.shift()};
-        logs.forEach((log) => console.log(log));
+        updateDisplay(player, monsters);
 
         for (let i = 0; i < orderOfBattle.length; i++) {
             const unit = orderOfBattle[i];
@@ -297,6 +313,7 @@ async function battle(stage, player, monsters) {
     }
 
 
+    logs = [];
     if (player.hp <= 0) {
         return false;
     } else {
@@ -350,7 +367,7 @@ export async function startGame() {
     let name;
     await intro();
     name = await createName();
-    const player = new Player(name, 100, 100, 10, 5, 5, 2, 10, 0, 0, 95);
+    const player = new Player(name, 100, 100, 100, 5, 5, 2, 10, 0, 0, 95);
     let stage = 1;
     let progress = 0;
     main(player, stage, progress);
@@ -360,3 +377,4 @@ startGame()
 
 //할일 1. 몬스터 전투, 스킬 적용, 2. 배틀시스템 정리 3. 장비 아이템 적용. 4. 사용아이템. 스킬추가와 회복. 적용
 //5. 보스 잡고 다음으로 넘어가는거. 6. 특수 이벤트 적용. 7. 결말.
+
