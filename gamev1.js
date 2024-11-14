@@ -2,9 +2,8 @@
 //이 다음으로 해야할 것은 우선 장비 아이템과 체력 아이템이다. 그후 이벤트 몇개 만들고 보스몹 만들기.
 //그 뒤에는 엔딩이겠다. 아마 스테이지 1만 만들듯. 
 
-//.v8
-//우선 아이템 사용은 구현함.
-//장비 사용과. 언제나 나의 상태를 볼수 있는창이 있으면 좋겠다. hp가 회복됬는지 안됬는지 알수가 없네.
+//.v9
+//장비 아이템도 구현했다. 이제 이벤트만 만들자. 이벤트 1-2-3정도 만들고 보스몹 만들고 끝냅시다.
 
 import chalk from 'chalk';
 import readlineSync from 'readline-sync';
@@ -24,6 +23,14 @@ class Player {
         this.level = level; // 레벨
         this.exp = exp; //경험 
         this.hit = hit; //적중률
+        this.wear = {testArmor :{name:'천갑옷.', pldef:2}}
+        this.item = {
+            HPpotion: 1
+        }
+
+        this.Equipment = {
+            ShabbyClothArmor : {name:'허름한 천갑옷.', pldef:1} 
+        }
 
         this.skills = {
             effects: () => {
@@ -36,9 +43,6 @@ class Player {
             }
         };
 
-        this.item = {
-            HPpotion: 1
-        }
     }
 
     attack(atk) {
@@ -351,7 +355,7 @@ async function useItem(player, itemName) {
 
 async function itemstage(player) {
     while (true) {
-        console.clear;
+        
         console.log(`무엇을 사용할까.`);
 
         const items = Object.keys(player.item);
@@ -368,8 +372,79 @@ async function itemstage(player) {
         const itemName = items[itemNumber - 1];
 
         if (itemName) {
-            useItem(player, itemName);
+           await useItem(player, itemName);
         } else {
+            console.log("잘못된 선택입니다. 다시 선택해 주세요.");
+            console.clear();
+        }
+    }
+}
+
+async function clothEquipment(player){
+    const equipment = Object.keys(player.wear)[0];
+   if (!equipment) {
+        console.log('벗을 장비가 없습니다.');
+    } else {
+        const item = player.wear[equipment];
+        player.def -= item.pldef;
+        
+        player.Equipment[equipment] = item;
+        
+        delete player.wear[equipment];
+        
+        console.log(`${item.name}을 벗었습니다. 방어력이 ${item.pldef}만큼 감소했습니다.`);
+    }
+
+
+}
+
+
+
+async function useEquipment(player, EquipmentName) {
+    if (player.Equipment[EquipmentName]) {
+        if (Object.keys(player.wear).length > 0) {
+            await clothEquipment(player); 
+        }
+        
+        const newItem = player.Equipment[EquipmentName];
+        
+        player.def += newItem.pldef;
+        player.wear[EquipmentName] = newItem; 
+        
+        delete player.Equipment[EquipmentName];
+        
+        console.log(`${newItem.name}을 착용했습니다. 방어력이 ${newItem.pldef}만큼 증가했습니다.`);
+    } else {
+        console.log("해당 장비가 없습니다.");
+    }
+}
+
+
+async function Equipmentstage(player) {
+
+    while (true) {
+        
+        console.log(`\n무엇을 입을까.`);
+
+        const Equipments = Object.keys(player.Equipment);
+        const EquipmentList = Equipments.map((name, index) => `${index + 1}. ${player.Equipment[name].name}`).join(' ') + ` ${Equipments.length + 1}. 되돌아 가기`;
+        console.log(chalk.green(`\n아이템 선택: ${EquipmentList}`));
+
+        const EquipmentNumber = parseInt(await readlineSync.question('사용할 아이템을 선택해 주세요: '), 10);
+
+        if (EquipmentNumber === Equipments.length + 1) {
+            console.log("선택을 취소하고 돌아갑니다.");
+            break; // Exit the loop if "Go Back" is selected
+        }
+
+        const EquipmentName = Equipments[EquipmentNumber - 1];
+
+        if (EquipmentName) {
+            console.clear();
+            await useEquipment(player, EquipmentName);
+            
+        } else {
+            console.clear();
             console.log("잘못된 선택입니다. 다시 선택해 주세요.");
         }
     }
