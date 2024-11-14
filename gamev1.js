@@ -34,7 +34,7 @@ class Player {
 }
 
 class Monster {
-    constructor(name, hp = 100, mp = 100, atk = 10, def = 5, dodge = 5, speed = 2, critical = 20, level = 0, exp = 0, hit = 95) {
+    constructor(name, hp = 100, mp = 100, atk = 10, def = 5, dodge = 5, speed = 2, critical = 20, level = 0, exp = 0, hit = 95, skills = {}) {
         this.name = name;
         this.hp = hp; //체력
         this.mp = mp; // 마나
@@ -46,7 +46,7 @@ class Monster {
         this.level = level; // 레벨
         this.exp = exp; //경험 
         this.hit = hit; //적중률
-        this.skills = {}; // 몬스터가 배울 스킬들
+        this.skills = skills; // 몬스터가 배울 스킬들
     }
 
     attack() {
@@ -151,9 +151,6 @@ async function event1(stage, player) {
     let Skeleton = new Monster('Skeleton', 50, 0, 15, 10, 1, 20, 1, 20, 50, {
         boneThrow: (atk) => { return {skillName: "boneThrow", damage:this.atk}} 
     });
-    let slime = new Monster('slime', 10, 0, 6, 0, 1, 0, 1, 5, 80, {
-        acidSplash: (atk) => { return {skillName: "boneThrow", damage:this.atk}} 
-    });
 
     let monsters = [Goblin, Skeleton];
     const playerWon = await battle(stage, player, monsters);
@@ -177,10 +174,10 @@ async function playerAttackmethod(player, monsters) {
 
             if (target === '1' && monsters[0].hp > 0) {
                 let damage = player.attack(player.atk);
-                monsters[0].hp -= damageCalculation(player, monsters[0], damage);
+                monsters[0].hp -=await damageCalculation(player, monsters[0], damage);
             } else if (target === '2' && monsters[1].hp > 0) {
                 let damage = player.attack(player.atk);
-                monsters[1].hp -= damageCalculation(player, monsters[1], damage);
+                monsters[1].hp -=await damageCalculation(player, monsters[1], damage);
             } else {
                 logs.push(chalk.red('올바른 몬스터를 선택하세요.'));
             }
@@ -199,6 +196,7 @@ async function playerAttackmethod(player, monsters) {
                 if (player.mp >= mpCost) {
                     player.mp -= mpCost; // 마나 차감
                     console.log(chalk.green(`\n스킬이 발동되었습니다!`));
+                    console.log(chalk.green(`1. ${monsters[0].name} 2. ${monsters[1].name}`));
                     const target = await readlineSync.question('공격할 몬스터를 선택하세요: ');
     
                     if (target === '1' && monsters[0].hp > 0) {
@@ -223,15 +221,13 @@ async function playerAttackmethod(player, monsters) {
 
 async function monsterAttackmethod(player, monster) {
     let selectedSkill;
-
-    const skillNames = Object.keys(monster.skills);
+    const skillNames =  monster.skills ? Object.keys(monster.skills) : [];
     if (skillNames.length > 0) {
-        // Choose a random skill from the monster's skill list
         const randomIndex = Math.floor(Math.random() * skillNames.length);
         selectedSkill = monster.skills[skillNames[randomIndex]](monster.atk);
     } else {
         selectedSkill = null;
-    } //이게 뭐냐.
+    } //2024-11-13 이게 뭐냐.
 
     let damage;
     if (selectedSkill && monster.mp >= selectedSkill.mpCost) {
@@ -242,20 +238,20 @@ async function monsterAttackmethod(player, monster) {
         // 마나 부족 시 기본 공격
         damage = monster.atk;
     }
-    player.hp -= damageCalculation(monster, player, damage);
+    player.hp -= await damageCalculation(monster, player, damage);
 
 };
 
 async function battle(stage, player, monsters) {
     const orderOfBattle = [{ ...player, type: 'player' }, ...monsters.map(monster => ({ ...monster, type: 'monster' }))];
     orderOfBattle.sort((a, b) => b.speed - a.speed);
+    
     while (player.hp > 0 && monsters.some(monster => monster.hp > 0)) { // 몬스터가 살아있는 동안
         console.clear();
         console.log(`Player: ${player.name}, HP: ${player.hp}`);
         monsters.forEach((monster, index) => {
             console.log(`Monster ${index + 1}: ${monster.name}, HP: ${monster.hp}`);
         });
-        
 
         for (let i = 0; i < orderOfBattle.length; i++) {
             const unit = orderOfBattle[i];
@@ -263,7 +259,7 @@ async function battle(stage, player, monsters) {
             if (unit.type === 'player' && unit.hp > 0) {
                 await playerAttackmethod(player, monsters); // 플레이어 공격 처리
             } else if (unit.type === 'monster' && unit.hp > 0) {
-                await monsterAttackmethod(player, monsters);
+                await monsterAttackmethod(player, unit);
             }
         }
     }
@@ -291,13 +287,14 @@ async function main(player, stage) {
         console.log(`던전 ${stage} 층`);
         console.log(`탐험도 : ${progress}`);
         console.log(`1.길을 찾는다. 2.아이템을 사용한다. 3.장비를 변경한다.`)
+
         let validChoice = false;
         while (!validChoice) {
             const choice = await readlineSync.question();
     
             switch (choice) {
                 case '1':
-                    progress=+event1(stage, player);
+                    progress += await event1(stage, player);
                     validChoice = true;
                     break;
                 // case '2':
