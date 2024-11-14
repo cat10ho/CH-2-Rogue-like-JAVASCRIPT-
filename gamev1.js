@@ -1,7 +1,8 @@
-//5v. 병신임. 넣을때 하나씩 밀려서 스킬창에 스킬이 안들어간거임. 
-// 이제 정상작동 한다. 아오 십 . 근데 이름 왜 찐빠났냐.
-//아니 시체가 공격을 하잖아. 그리고 왜 나만 크리티컬이 안나냐. 병신아 니가 크리티컬을 안넣었잖아. 이제 넣음.
-
+//해결할 문제점. 1.체력이 0이되면 공격하지 않기. 2. 선택이 되지않게. 다시 돌리기. 이건 while문 쓰면됨.
+// 1번만 해결되면 배틀문제는 끝날듯.
+//문제점 발견. 1. 몬스터 hp랑 불러온 unithp랑 별개로 지정된듯. 그래서 몬스터 다 까여도 유닛은 그대로라 그럼.
+// 해결. 타입도 개별적으로 넣어줌.
+// 드디어 끝남.
 
 import chalk from 'chalk';
 import readlineSync from 'readline-sync';
@@ -174,7 +175,7 @@ async function event1(stage, player) {
 async function playerAttackmethod(player, monsters) {
     console.log(chalk.green(`\n1. 일반공격 2. 스킬을 사용한다.`));
     const choice = await readlineSync.question('당신의 선택은? ');
-
+    
     switch (choice) {
         case '1': // 일반공격
             console.log(chalk.green(`1. ${monsters[0].name} 2. ${monsters[1].name}`));
@@ -260,7 +261,14 @@ async function monsterAttackmethod(player, monster) {
 }
 
 async function battle(stage, player, monsters) {
-    const orderOfBattle = [{ ...player, type: 'player' }, ...monsters.map(monster => ({ ...monster, type: 'monster' }))];
+    const orderOfBattle = [{ ...player, type: 'player' }];
+
+    // 원본 monsters 배열의 각 객체에 직접 type 속성을 추가
+    monsters.forEach(monster => {
+        monster.type = 'monster';
+        orderOfBattle.push(monster);
+    });
+
     orderOfBattle.sort((a, b) => {
         if (b.speed === a.speed) {
             return Math.random() < 0.5 ? 1 : -1; // 속도가 같으면 랜덤하게 순서 결정
@@ -280,7 +288,6 @@ async function battle(stage, player, monsters) {
 
         for (let i = 0; i < orderOfBattle.length; i++) {
             const unit = orderOfBattle[i];
-            // 플레이어나 몬스터의 공격 처리
             if (unit.type === 'player' && unit.hp > 0) {
                 await playerAttackmethod(player, monsters); // 플레이어 공격 처리
             } else if (unit.type === 'monster' && unit.hp > 0) {
