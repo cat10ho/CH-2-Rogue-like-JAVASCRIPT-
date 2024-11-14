@@ -1,4 +1,7 @@
-//4v. 적이 공격을 안함. 스킬, 공격 잘 들어감. 가끔 빗나가기도 함. 마나없으면 스킬 안씀.
+//5v. 병신임. 넣을때 하나씩 밀려서 스킬창에 스킬이 안들어간거임. 
+// 이제 정상작동 한다. 아오 십 . 근데 이름 왜 찐빠났냐.
+//아니 시체가 공격을 하잖아. 그리고 왜 나만 크리티컬이 안나냐. 병신아 니가 크리티컬을 안넣었잖아. 이제 넣음.
+
 
 import chalk from 'chalk';
 import readlineSync from 'readline-sync';
@@ -71,7 +74,7 @@ function isHit(attacker, defender) {
 
 async function damageCalculation(attacker, defender, damage) {
     if (!isHit(attacker, defender)) {
-        logs.push(chalk.red('빗나감!'));
+        logs.push(chalk.red(`${attacker.name}의 공격이 빗나갔다!`));
         return 0;
     } else {
         let AttackDamage = damage - defender.def;
@@ -148,11 +151,14 @@ async function intro() {
 async function event1(stage, player) {
     let addprogress=0;
 
-    let Goblin = new Monster('Goblin', 30, 0, 9, 5, 1, 20, 1, 5, 90, {
-        slash: (atk) => { return {skillName: "slash", damage:this.atk}} 
+    let Goblin = new Monster('Goblin', 30, 0, 9, 5, 0, 1, 20, 1, 5, 90, {
+        slash: function() {
+            return { skillName: "slash", damage: this.atk };
+        }
     });
-    let Skeleton = new Monster('Skeleton', 50, 0, 15, 10, 1, 20, 1, 20, 50, {
-        boneThrow: (atk) => { return {skillName: "boneThrow", damage:this.atk}} 
+    let Skeleton = new Monster('Skeleton', 50, 0, 15, 10, 0, 1, 20, 1, 20, 50, {
+        boneThrow: function() { return {skillName: "boneThrow", damage:this.atk} 
+        }
     });
 
     let monsters = [Goblin, Skeleton];
@@ -228,6 +234,8 @@ async function playerAttackmethod(player, monsters) {
 }
 
 async function monsterAttackmethod(player, monster) {
+    if (monster.hp <= 0) return;
+    
     let selectedSkill;
     const skillNames = monster.skills ? Object.keys(monster.skills) : [];
     if (skillNames.length > 0) {
@@ -266,6 +274,9 @@ async function battle(stage, player, monsters) {
         monsters.forEach((monster, index) => {
             console.log(`Monster ${index + 1}: ${monster.name}, HP: ${monster.hp}`);
         });
+
+        while(logs.length>4){logs.shift()};
+        logs.forEach((log) => console.log(log));
 
         for (let i = 0; i < orderOfBattle.length; i++) {
             const unit = orderOfBattle[i];
@@ -332,7 +343,7 @@ export async function startGame() {
     let name;
     await intro();
     name = await createName();
-    const player = new Player(name, 100, 100, 10, 5, 2, 20, 0, 0, 95);
+    const player = new Player(name, 100, 100, 10, 5, 5, 2, 10, 0, 0, 95);
     let stage = 1;
     let progress = 0;
     main(player, stage, progress);
@@ -342,4 +353,3 @@ startGame()
 
 //할일 1. 몬스터 전투, 스킬 적용, 2. 배틀시스템 정리 3. 장비 아이템 적용. 4. 사용아이템. 스킬추가와 회복. 적용
 //5. 보스 잡고 다음으로 넘어가는거. 6. 특수 이벤트 적용. 7. 결말.
-
