@@ -1,18 +1,15 @@
-//2024-11-14
+//2024-11-15
 //그 뒤에는 엔딩이겠다. 아마 스테이지 1만 만들듯. 
-// 진짜로 우선 상인을 만들어 보자꾸나.
-//그 뒤 이벤트 2개만 만들자. 미믹 이벤트와 아오 장비추가를 무조건 해야하잖아.
-// 그리고 사람 만나는 이벤트. 1/2로 좋은사람 나쁜사람임. 좋은사람이면 지도공유로 진척도 올라가고 나쁜사람이면 뒤통수 맞고 hp까임
-// 먼저 선공도 가능. 그럼 피깍고 무조건 싸움.
-
-//3. 상인이 물건을 판다면 살수 있도록.
-
 //그리고 보스도 만들어 보자꾸나. 보스는 특수 스킬이 있으면 좋겠다.
 // 뭐 간단하게 반격으로 해보자. 속도가 빨라지고, 반격하는. 그럼 방어가 있어야 겠네.. 아. 에효.. 반격때는 공격을 하면 안되게. 이것만 하고 끝내자.
 //보스는 내일 만들고.
 
-//.v13. 플레이어 공격선택 바꿈 이제 1,2명 됨. 아마 3명도 될듯 상점구현함. 이벤트 상점까지 총 4개임
-// 보스만 하면 될듯. 데스엔딩이랑. 버그로는 아이템 있는 상태에서 아이템 먹으면 먹어지는데 벗고 입으면 사라짐. 귀여운 버그라 놔두려나.
+//방어 모드. 이거 플레이어 공격할때 리턴값이 없으니까. 방어을 선택하면 리턴값을 방어 방어를 주고. 그걸 몬스터에 넣으면 될듯.
+//흠. 근데 데미지.. 아닌가. 크리티컬
+// 아 다행이다. 데미지 공격식에서 그 방어 값을 받으면 되겠다. 그래서 방어면 방어했다 를 하면 될듯. 어짜피 방어는 플레이어만 할꺼니까~
+
+//.v14. 방어 만듬.
+
 
 
 
@@ -220,7 +217,7 @@ async function event2(stage, player) {
 이곳은 던전이고, 오로지 경쟁자만 있다.
 
 당신은 인기척이 없어질 때까지 기다렸다.`];
-                await showDialogue(event2dialogues1, 1000);
+                await showDialogue(event2dialogues2, 1000);
                 validChoice = true;
                 addprogress = 5;
                 break;
@@ -235,7 +232,7 @@ async function event2(stage, player) {
                 } else {
                     const event2dialogues4 = [`상대는 당신을 보자 비릿히 웃으며 다가온다. 
 당신은 직감적으로 싸워야 함을 알았다.`]
-                    await showDialogue(event2dialogues3, 1000);
+                    await showDialogue(event2dialogues4, 1000);
 
                     let badAdventurer = new Monster('모험가', 100, 0, 30, 10, 0, 2, 20, 1, 5, 100, 200, { HPpotion: 1, MPpotion: 1 }, { plateArmor: { name: '단단한 판금갑옷', pldef: 5, rarity: 5 } }, {
                         slash: function () {
@@ -390,7 +387,6 @@ async function shop(player) {
         if (player.gold >= selectedItem.gold) {
             player.gold -= selectedItem.gold;
             if (selectedItem.type === 'item') {
-                // item의 경우 'potion'을 추가
                 const potionKey = selectedItem.effect;
                 player.item[potionKey] = (player.item[potionKey] || 0) + selectedItem.amount; // 기존 값에 추가
             } else if (selectedItem.type === 'equipment') {
@@ -478,7 +474,35 @@ async function event4(stage, player) {
     return addprogress;
 }
 
-async function event5(stage, player) {
+async function stageboss(stage, player) {
+    const bossdialogues1 = [`보스 몬스터를 발견했다.`];
+    await showDialogue(bossdialogues1, 1000);
+
+    let stage1boss = new Monster('보스', 500, 0, 10, 20, 0, 5, 0, 1, 5, 100, 500, { HPpotion: 2, MPpotion: 1 }, { plateArmor: { name: '강력한 갑옷', pldef: 10, rarity: 5 } }, {
+
+        attack: function () {
+            return { skillName: "attack", damage: this.atk };
+        },
+
+
+        readiness: function () {
+            this.mp += 30;
+            this.speed -= 4;
+            return { skillName: "readiness", damage: this.atk };
+        },
+
+
+        counteroffensive: function () {
+            return { skillName: "counteroffensive", damage: this.atk };
+        }
+
+    });
+
+    let monsters = [stage1boss];
+
+    const playerWon = await battle(stage, player, monsters);
+
+
 
 }
 
@@ -509,7 +533,7 @@ async function playerAttackmethod(player, monsters) {
 
     let validChoice = false; //옳은 선택지 넣으면 바뀜
     while (!validChoice) {
-        console.log(chalk.green(`\n1. 일반공격 2. 스킬을 사용한다.`));
+        console.log(chalk.green(`\n1. 일반공격 2. 스킬을 사용한다. 3. 방어`));
         const choice = await readlineSync.question('당신의 선택은? ');
 
         switch (choice) {
@@ -526,6 +550,7 @@ async function playerAttackmethod(player, monsters) {
                     const dealtDamage = await damageCalculation(player, target, damage);
                     target.hp -= dealtDamage;  // 몬스터 객체의 체력을 바로 수정
                     validChoice = true;
+                    return false;
                 } else {
                     logs.push(chalk.red('올바른 몬스터를 선택하세요.'));
                     updateDisplay(player, monsters);
@@ -555,6 +580,7 @@ async function playerAttackmethod(player, monsters) {
                             const dealtDamage = await damageCalculation(player, target, damage);
                             target.hp -= dealtDamage;  // 몬스터 객체의 체력을 바로 수정
                             validChoice = true;
+                            return false;
                         } else {
                             logs.push(chalk.red('올바른 몬스터를 선택하세요.'));
                         }
@@ -566,6 +592,11 @@ async function playerAttackmethod(player, monsters) {
                 }
                 break;
 
+            case '3': //방어. 
+                logs.push(chalk.red('당신은 방어를 시도했다.'));
+                validChoice = true;
+                return true
+
             default:
                 logs.push(chalk.red('올바른 선택을 하세요.'));
                 updateDisplay(player, monsters);
@@ -573,8 +604,13 @@ async function playerAttackmethod(player, monsters) {
     }
 }
 
-async function monsterAttackmethod(player, monster) {
+async function monsterAttackmethod(player, monster, defenseattempt) {
     if (monster.hp <= 0) return;
+
+    if (defenseattempt) {
+        logs.push(chalk.green('방어에 성공했다. 몬스터의 공격을 막았다.'));
+        return;
+    }
 
     let selectedSkill;
     const skillNames = monster.skills ? Object.keys(monster.skills) : [];
@@ -639,30 +675,35 @@ async function getItem(player, monsters) {
 async function battle(stage, player, monsters) {
     const orderOfBattle = [{ ...player, type: 'player' }];
 
+    let defenseattempt = false;
+
     // 원본 monsters 배열의 각 객체에 직접 type 속성을 추가
     monsters.forEach(monster => {
         monster.type = 'monster';
         orderOfBattle.push(monster);
     });
 
-    orderOfBattle.sort((a, b) => {
-        if (b.speed === a.speed) {
-            return Math.random() < 0.5 ? 1 : -1; // 속도가 같으면 랜덤하게 순서 결정
-        }
-        return b.speed - a.speed; // 속도에 따라 내림차순 정렬
-    });
-
     while (player.hp > 0 && monsters.some(monster => monster.hp > 0)) { // 몬스터가 살아있는 동안
         updateDisplay(player, monsters);
+
+        orderOfBattle.sort((a, b) => {
+            if (b.speed === a.speed) {
+                return Math.random() < 0.5 ? 1 : -1; // 속도가 같으면 랜덤하게 순서 결정
+            }
+            return b.speed - a.speed; // 속도에 따라 내림차순 정렬
+        });
 
         for (let i = 0; i < orderOfBattle.length; i++) {
             const unit = orderOfBattle[i];
             if (unit.type === 'player' && unit.hp > 0) {
-                await playerAttackmethod(player, monsters); // 플레이어 공격 처리
+                defenseattempt = await playerAttackmethod(player, monsters); // 플레이어 공격 처리
             } else if (unit.type === 'monster' && unit.hp > 0) {
-                await monsterAttackmethod(player, unit); //몬스터 공격 처리
+                await monsterAttackmethod(player, unit, defenseattempt); //몬스터 공격 처리
             }
         }
+
+        defenseattempt = false;
+
     }
 
     logs = [];
@@ -806,9 +847,44 @@ async function main(player, stage) {
             switch (choice) {
                 case '1':
                     console.clear;
-                    const events = [event1,event2,event3,event4];// 여기에 이벤트 개수 추가.
+                    const events = [event1, event2, event3, event4];// 여기에 이벤트 개수 추가.
                     const randomEvent = events[Math.floor(Math.random() * events.length)];
                     progress += await randomEvent(stage, player);
+                    validChoice = true;
+                    break;
+                case '2':
+                    console.clear;
+                    await itemstage(player)
+                    validChoice = true;
+                    break;
+                case '3':
+                    console.clear;
+                    await Equipmentstage(player)
+                    validChoice = true;
+                    break;
+                default:
+                //logs.push(chalk.red('올바른 선택을 하세요.'));
+            }
+        }
+    }
+
+    let bossclear = false;
+    while (!bossclear) {
+        progress = 100;
+        console.clear()
+        playereDisplay(player);
+        console.log(`던전 ${stage} 층`);
+        console.log(`탐험도 : ${progress}`);
+        console.log(`1.다음층으로 간다.(주의 보스몬스터.) . 2.아이템을 사용한다. 3.장비를 변경한다.`)
+
+        let validChoice = false;
+        while (!validChoice) {
+            const choice = await readlineSync.question();
+
+            switch (choice) {
+                case '1':
+                    console.clear;
+                    bossclear = await stageboss(stage, player);
                     validChoice = true;
                     break;
                 case '2':
@@ -840,5 +916,7 @@ export async function startGame() {
 } //
 
 startGame()
+
+
 
 
