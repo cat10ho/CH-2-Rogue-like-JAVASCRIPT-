@@ -4,7 +4,7 @@ import readlineSync from 'readline-sync';
 var logs = [];
 
 class Player {
-    constructor(name, hp = 100, mp = 100, atk = 10, def = 5, dodge = 5, speed = 3, critical = 20, level = 0, exp = 0, hit = 95, gold = 200) {
+    constructor(name, hp = 100, mp = 100, atk = 10, def = 5, dodge = 5, speed = 3, critical = 20, level = 0, exp = 0, hit = 95, gold = 2000) {
         this.name = name;
         this.hp = hp; //체력
         this.mp = mp; // 마나
@@ -18,7 +18,7 @@ class Player {
         this.hit = hit; //적중률
         this.gold = gold;
         this.wear = { ClothArmor: { name: '천갑옷.', pldef: 2, rarity: 1 } }
-        this.item = { HPpotion: 1, MPpotion: 1 }
+        this.item = { HPpotion: 0, MPpotion: 0 }
         this.Equipment = {}
         this.skills = {
             effects: () => {
@@ -185,7 +185,7 @@ async function event1(stage, player) {
 
     let addprogress = 0;
 
-    let Goblin = new Monster('Goblin', 30, 0, 9, 5, 0, 1, 20, 1, 5, 100, 20, { HPpotion: 1, MPpotion: 1 }, { ShabbyClothArmor: { name: '허름한 천갑옷', pldef: 1, rarity: 1 } }, {
+    let Goblin = new Monster('고블린', 100, 0, 10, 5, 10, 1, 20, 1, 5, 95, 20, { HPpotion: 1}, { ShabbyClothArmor: { name: '허름한 천갑옷', pldef: 5, rarity: 1 } }, {
         slash: {
             mpCost: 0,
             execute: function () {
@@ -194,7 +194,7 @@ async function event1(stage, player) {
         }
     });
 
-    let Skeleton = new Monster('Skeleton', 50, 0, 15, 10, 0, 1, 20, 1, 20, 100, 100, { HPpotion: 1, MPpotion: 1 }, { Solidbonearmor: { name: '단단한 뼈갑옷', pldef: 3, rarity: 3 } }, {
+    let Skeleton = new Monster('스켈레톤', 150, 0, 15, 10, 0, 1, 20, 1, 20, 100, 100, { HPpotion: 1, MPpotion: 1 }, { Solidbonearmor: { name: '단단한 뼈갑옷', pldef: 15, rarity: 3 } }, {
         boneThrow: {
             mpCost: 0,
             execute: function () {
@@ -259,7 +259,7 @@ async function event2(stage, player) {
 당신은 직감적으로 싸워야 함을 알았다.`]
                     await showDialogue(event2dialogues4, 1000);
 
-                    let badAdventurer = new Monster('모험가', 100, 0, 30, 10, 0, 2, 20, 1, 5, 100, 200, { HPpotion: 1, MPpotion: 1 }, { plateArmor: { name: '단단한 판금갑옷', pldef: 5, rarity: 5 } }, {
+                    let badAdventurer = new Monster('모험가', 200, 0, 25, 20,10, 2, 20, 1, 5, 100, 200, { HPpotion: 2, MPpotion: 1 }, { plateArmor: { name: '단단한 판금갑옷', pldef: 10, rarity: 2 } }, {
                         slash: {
                             mpCost: 0,
                             execute: function () {
@@ -289,7 +289,7 @@ async function event2(stage, player) {
                                             
 상대를 일격에 죽이지 못했으나 처리하기 쉬운 환경이 되었다. 당신은 마무리 짓기위해 달려들었다.`];
                 await showDialogue(event2dialogues5, 1000);
-                let hurtAdventurer = new Monster('상처입은 모험가', 30, 0, 7, 2, 0, 1, 0, 1, 5, 30, 200, { HPpotion: 1, MPpotion: 1 }, { BloodyplateArmor: { name: '피묻은 판금갑옷', pldef: 3, rarity: 3 } }, {
+                let hurtAdventurer = new Monster('상처입은 모험가', 100, 0, 10, 10, 0, 1, 0, 1, 5, 30, 200, { HPpotion: 1, MPpotion: 1 }, { BloodyplateArmor: { name: '피묻은 판금갑옷', pldef: 5, rarity: 1 } }, {
                     slash:{ mpCost: 0,
                         execute:function () {
                             return { skillName: "weak attackk", damage: this.atk, mpCost: this.mpCost };
@@ -315,7 +315,7 @@ async function event2(stage, player) {
 
 async function event3(stage, player) {
     const event3dialogues1 = [`지다가다 구석진 곳에 상자가 있다.
-        사람이 보기 힘든 곳이라 당신이 처음 발견한것 같다.`];
+사람이 보기 힘든 곳이라 당신이 처음 발견한것 같다.`];
     await showDialogue(event3dialogues1, 1000);
     console.log(`1.지나간다. 2.상자를 열어본다.`)
     let addprogress = 0;
@@ -362,7 +362,7 @@ async function event3(stage, player) {
 상자에 이빨이 돋아나더니 당신에게 달려들었다.`]
                     await showDialogue(event3dialogues4, 1000);
 
-                    let mimic = new Monster('미믹', 200, 0, 20, 20, 0, 1, 20, 1, 5, 100, 300, { HPpotion: 2, MPpotion: 1 }, { plateArmor: { name: '단단한 판금갑옷', pldef: 5, rarity: 5 } }, {
+                    let mimic = new Monster('미믹', 300, 0, 20, 20, 0, 1, 20, 1, 5, 100, 300, { HPpotion: 2, MPpotion: 1 }, { plateArmor: { name: '양철 갑옷', pldef: 20, rarity: 3 } }, {
                         slash:{  mpCost: 0,
                             execute: function () {
                                 return { skillName: "powerful bite", damage: this.atk, mpCost:  this.mpCost };
@@ -392,12 +392,20 @@ async function event3(stage, player) {
 
 async function shop(player) {
     const items = [
-        { name: 'HP 포션', type: 'item', effect: 'HPpotion', amount: 1, gold: 50 },
-        { name: 'MP 포션', type: 'item', effect: 'MPpotion', amount: 1, gold: 50 },
-        { name: '나무 갑옷', type: 'equipment', details: { name: '나무 갑옷', pldef: 2, rarity: 2 }, gold: 100 }
+        { name: 'HP 포션', type: 'item', effect: 'HPpotion', amount: 1, gold: 250 },
+        { name: 'MP 포션', type: 'item', effect: 'MPpotion', amount: 1, gold: 250 },
+        { name: '나무 갑옷', type: 'equipment', details: { name: '나무 갑옷', pldef: 2, rarity: 2 }, gold: 500 }
     ]; //판매 물품 배열.
 
     while (true) {
+        playereDisplay(player)
+
+        const itemsr = Object.keys(player.item);
+        const itemListr = itemsr.map((item, index) => `${index + 1}. ${item} (x${player.item[item]})`);
+
+        //선택창 만드는거. 밑의 장비와 같다.
+        console.log(chalk.green(`\n현재 가진 아이템: ${itemListr}\n`));
+
         items.forEach((item, index) => {
             console.log(`${index + 1}. ${item.name} - ${item.gold} 골드`);
         });
@@ -501,6 +509,12 @@ async function event4(stage, player) {
     return addprogress;
 }// 상인 이벤트. 물건을 살 수 있다. 
 
+async function event5(stage, player) {
+}//죽어있는 모험가 에게서 아이템 루팅.
+
+async function event6(stage, player) {
+}//
+
 async function stageboss(stage, player) {
     const bossdialogues1 = [`당신은 던전 깊숙한 곳으로 향하던 중, 갑자기 거대한 구조물을 발견한다. 
 그 구조물은 마치 이 던전의 오랜 비밀을 숨기고 있는 듯한 인상을 준다. 
@@ -526,7 +540,7 @@ async function stageboss(stage, player) {
     await showDialogue(bossdialogues3, 1000);
     await showDialogue(bossdialogues4, 1000);
 
-    let stage1boss = new Monster('골렘', 500, 0, 10, 20, 0, 5, 0, 1, 5, 100, 500, { HPpotion: 2, MPpotion: 1 }, { plateArmor: { name: '강력한 갑옷', pldef: 10, rarity: 5 } }, {
+    let stage1boss = new Monster('골렘', 500, 0, 30, 40, 0, 5, 0, 1, 5, 100, 500, { HPpotion: 2, MPpotion: 1 }, { plateArmor: { name: '강력한 갑옷', pldef: 20, rarity: 1 } }, {
 
         attack: {
             mpCost: 0,
@@ -541,7 +555,7 @@ async function stageboss(stage, player) {
             execute: function () {
                 this.mp += 30;
                 this.speed -= 4;
-                logs.push(chalk.red('강력한 공격을 준비한다., 속도가 느려졌다.'));
+                logs.push(chalk.red('골렘이 힘을 모은다. 속도가 느려졌다.'));
                 return { skillName: "readiness", damage: 0, mpCost: this.mpCost };
             }
         },
@@ -804,12 +818,12 @@ async function useItem(player, itemName) {
     if (player.item[itemName] > 0) {
         switch (itemName) {
             case 'HPpotion':
-                player.hp = Math.min(player.hp + 50, 100); // 최대 100까지만.
+                player.hp = Math.min(player.hp + 20, 100); // 최대 100까지만.
                 player.item[itemName]--;
                 logs.push(chalk.green(`${player.name} 의 hp가 회복됬다.`));
                 break;
             case 'MPpotion':
-                player.hp = Math.min(player.mp + 50, 100); 
+                player.mp = Math.min(player.mp + 20, 100); 
                 player.item[itemName]--;
                 logs.push(chalk.green(`${player.name} 의 mp가 회복됬다.`));
                 break;
