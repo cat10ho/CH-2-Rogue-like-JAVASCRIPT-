@@ -8,7 +8,12 @@
 //흠. 근데 데미지.. 아닌가. 크리티컬
 // 아 다행이다. 데미지 공격식에서 그 방어 값을 받으면 되겠다. 그래서 방어면 방어했다 를 하면 될듯. 어짜피 방어는 플레이어만 할꺼니까~
 
-//.v14. 방어 만듬.
+//보스 만들어 보기.
+
+//.v15. 1. 뭔가 뭔가 일어난다. 1.지금까지 스킬이 하나고 마나가 없어서 스킬을 안쓰고 있었던 것도 몰랐다.
+// -> 스킬 함수 리턴값에 마나 코스트가 있었기에 인식을 못하고 있었던 것. 마나 코스트를 밖으로 빼줬다.
+// 2. 이제 보스가 패턴도 쓴다. 뭐 그래봤자 한턴 멈췄다가 쎄게 때리는 거긴 한데. 이게 어디야~
+// 이제 스토리 다듬고 끝내면 될듯. 모든게 완벽한것 같다. 플레이서 스킬추가는 나중에 해보자. 아마 되겠는데 귀찮기도 하고. 
 
 
 
@@ -70,18 +75,6 @@ class Monster {
         this.item = item
         this.Equipment = Equipment
         this.skills = skills; // 몬스터가 배울 스킬들
-    }
-
-    attack() {
-        return this.atk;
-    }
-
-    useSkill(skillName) {
-        const skill = this.skills.find(s => s.skillName === skillName);
-        if (skill) {
-            return skill.damage;
-        }
-        return 0;
     }
 }
 
@@ -172,19 +165,30 @@ async function event1(stage, player) {
     let addprogress = 0;
 
     let Goblin = new Monster('Goblin', 30, 0, 9, 5, 0, 1, 20, 1, 5, 100, 20, { HPpotion: 1, MPpotion: 1 }, { ShabbyClothArmor: { name: '허름한 천갑옷', pldef: 1, rarity: 1 } }, {
-        slash: function () {
-            return { skillName: "slash", damage: this.atk };
+        slash: {
+            mpCost: 0,
+            execute: function () {
+                return { skillName: "slash", damage: this.atk, mpCost: this.mpCost };
+            }
         }
     });
+
     let Skeleton = new Monster('Skeleton', 50, 0, 15, 10, 0, 1, 20, 1, 20, 100, 100, { HPpotion: 1, MPpotion: 1 }, { Solidbonearmor: { name: '단단한 뼈갑옷', pldef: 3, rarity: 3 } }, {
-        boneThrow: function () {
-            return { skillName: "boneThrow", damage: this.atk }
+        boneThrow: {
+            mpCost: 0,
+            execute: function () {
+                return { skillName: "boneThrow", damage: this.atk, mpCost: this.mpCost };
+            }
         }
     });
     let slime = new Monster('slime', 10, 0, 8, 0, 0, 1, 20, 1, 20, 100, 0, {}, {}, {
-        slimeattack: function () {
-            return { skillName: "slimeattack", damage: this.atk }
-        }
+        slimeattack:{
+            mpCost: 0,
+            execute: function () {
+                return { skillName: "slimeattack", damage: this.atk, mpCost: this.mpCost }
+            }
+
+        } 
     });
 
     let monsters = [Goblin, Skeleton];
@@ -235,8 +239,11 @@ async function event2(stage, player) {
                     await showDialogue(event2dialogues4, 1000);
 
                     let badAdventurer = new Monster('모험가', 100, 0, 30, 10, 0, 2, 20, 1, 5, 100, 200, { HPpotion: 1, MPpotion: 1 }, { plateArmor: { name: '단단한 판금갑옷', pldef: 5, rarity: 5 } }, {
-                        slash: function () {
-                            return { skillName: "powerful attack", damage: this.atk };
+                        slash: {
+                            mpCost: 0,
+                            execute: function () {
+                            return { skillName: "powerful attack", damage: this.atk, mpCost: this.mpCost };
+                        }
                         }
                     });
 
@@ -262,9 +269,11 @@ async function event2(stage, player) {
 상대를 일격에 죽이지 못했으나 처리하기 쉬운 환경이 되었다. 당신은 마무리 짓기위해 달려들었다.`];
                 await showDialogue(event2dialogues5, 1000);
                 let hurtAdventurer = new Monster('상처입은 모험가', 30, 0, 7, 2, 0, 1, 0, 1, 5, 30, 200, { HPpotion: 1, MPpotion: 1 }, { BloodyplateArmor: { name: '피묻은 판금갑옷', pldef: 3, rarity: 3 } }, {
-                    slash: function () {
-                        return { skillName: "weak attackk", damage: this.atk };
-                    }
+                    slash:{ mpCost: 0,
+                        execute:function () {
+                            return { skillName: "weak attackk", damage: this.atk, mpCost: this.mpCost };
+                        }
+                    } 
                 });
                 let monsters = [hurtAdventurer];
                 const playerWon = await battle(stage, player, monsters);
@@ -333,9 +342,12 @@ async function event3(stage, player) {
                     await showDialogue(event3dialogues4, 1000);
 
                     let mimic = new Monster('미믹', 200, 0, 20, 20, 0, 1, 20, 1, 5, 100, 300, { HPpotion: 2, MPpotion: 1 }, { plateArmor: { name: '단단한 판금갑옷', pldef: 5, rarity: 5 } }, {
-                        slash: function () {
-                            return { skillName: "powerful bite", damage: this.atk };
-                        }
+                        slash:{  mpCost: 0,
+                            execute: function () {
+                                return { skillName: "powerful bite", damage: this.atk, mpCost:  this.mpCost };
+                            }
+
+                        } 
                     });
 
                     let monsters = [mimic];
@@ -451,8 +463,10 @@ async function event4(stage, player) {
                 await showDialogue(event4dialogues5, 1000);
 
                 let shopkeeper = new Monster('상점주인', 100, 0, 700, 20, 0, 1, 20, 1, 5, 100, 300, { HPpotion: 2, MPpotion: 1 }, { plateArmor: { name: '단단한 판금갑옷', pldef: 5, rarity: 5 } }, {
-                    slash: function () {
-                        return { skillName: "dath", damage: this.atk };
+                    slash:{ mpCost: 0,
+                        execute:function () {
+                            return { skillName: "dath", damage: this.atk, mpCost: this.mpCost };
+                        }
                     }
                 });
 
@@ -480,22 +494,32 @@ async function stageboss(stage, player) {
 
     let stage1boss = new Monster('보스', 500, 0, 10, 20, 0, 5, 0, 1, 5, 100, 500, { HPpotion: 2, MPpotion: 1 }, { plateArmor: { name: '강력한 갑옷', pldef: 10, rarity: 5 } }, {
 
-        attack: function () {
-            return { skillName: "attack", damage: this.atk };
+        attack: {
+            mpCost: 0,
+            execute: function () {
+                logs.push(chalk.red('기본공격을 하였다.'));
+                return { skillName: "attack", damage: this.atk, mpCost: this.mpCost };
+            }
         },
-
-
-        readiness: function () {
-            this.mp += 30;
-            this.speed -= 4;
-            return { skillName: "readiness", damage: this.atk };
+    
+        readiness: {
+            mpCost: 0,
+            execute: function () {
+                this.mp += 30;
+                this.speed -= 4;
+                logs.push(chalk.red('강력한 공격을 준비한다., 속도가 느려졌다.'));
+                return { skillName: "readiness", damage: 0, mpCost: this.mpCost };
+            }
         },
-
-
-        counteroffensive: function () {
-            return { skillName: "counteroffensive", damage: this.atk };
+    
+        counteroffensive: {
+            mpCost: 30,
+            execute: function () {
+                this.speed += 4;
+                logs.push(chalk.red('쾅!!!!!'));
+                return { skillName: "counteroffensive", damage: 20 * this.atk, mpCost: this.mpCost };
+            }
         }
-
     });
 
     let monsters = [stage1boss];
@@ -515,7 +539,7 @@ function updateDisplay(player, monsters) {
         console.log(`Monster ${index + 1}: ${monster.name}, HP: ${monster.hp}`);
     });
 
-    while (logs.length > 4) { logs.shift() };
+    while (logs.length > 10) { logs.shift() };
     logs.forEach((log) => console.log(log));
 }
 
@@ -525,7 +549,7 @@ function playereDisplay(player) {
     console.log(`Player: ${player.name}, HP: ${player.hp}, MP: ${player.mp}, def:${player.def},
        착용중인 장비: ${wearItemName} gold: ${player.gold} `);
 
-    while (logs.length > 4) { logs.shift() };
+    while (logs.length > 10) { logs.shift() };
     logs.forEach((log) => console.log(log));
 }//
 
@@ -604,34 +628,53 @@ async function playerAttackmethod(player, monsters) {
     }
 }
 
+
 async function monsterAttackmethod(player, monster, defenseattempt) {
     if (monster.hp <= 0) return;
 
+    let selectedSkill;
+    const skillNames = monster.skills ? Object.keys(monster.skills) : [];
+    const skillsWithManaCost = skillNames.filter(skill => monster.skills[skill].mpCost > 0);
+    const skillsWithoutManaCost = skillNames.filter(skill => monster.skills[skill].mpCost === 0);
+
+    // 마나 코스트가 있는 스킬 우선 시도
+    if (skillsWithManaCost.length > 0) {
+        const sortedSkills = skillsWithManaCost.sort((a, b) => monster.skills[b].mpCost - monster.skills[a].mpCost);
+        for (const skillName of sortedSkills) {
+            const skill = monster.skills[skillName];
+            if (monster.mp >= skill.mpCost) {
+                selectedSkill = skill;
+                break; // 마나가 충분한 첫 번째 스킬 사용
+            }
+        }
+    }
+
+    if (!selectedSkill && skillsWithoutManaCost.length > 0) {
+        const randomIndex = Math.floor(Math.random() * skillsWithoutManaCost.length);
+        selectedSkill = monster.skills[skillsWithoutManaCost[randomIndex]];
+    }
+
+    let damage;
+    if (selectedSkill) {
+        const skillResult = selectedSkill.execute.call(monster); 
+        damage = skillResult.damage;
+        if (skillResult.mpCost > 0) {
+            monster.mp -= skillResult.mpCost; 
+        }
+    } else {
+        damage = monster.atk;
+    }
+
+    // 방어 성공 여부 확인
     if (defenseattempt) {
         logs.push(chalk.green('방어에 성공했다. 몬스터의 공격을 막았다.'));
         return;
     }
 
-    let selectedSkill;
-    const skillNames = monster.skills ? Object.keys(monster.skills) : [];
-    if (skillNames.length > 0) {
-        const randomIndex = Math.floor(Math.random() * skillNames.length);
-        selectedSkill = monster.skills[skillNames[randomIndex]](monster.atk);
-    } else {
-        selectedSkill = null;
-    }
-
-    let damage;
-    if (selectedSkill && monster.mp >= selectedSkill.mpCost) {
-        monster.mp -= selectedSkill.mpCost;
-        damage = selectedSkill.damage;
-    } else {
-        damage = monster.atk;
-    }
-
+    // 피해 계산
     const dealtDamage = await damageCalculation(monster, player, damage);
     player.hp -= dealtDamage;
-}//
+}// 아 리턴값에 마나코스트가 있어서 애가 못본거임 해결 ㅋㅋ 아. 이건 뭐.. 근데 이러니까 플레이어 스킬이 또.. 뭐 작동되잖아 한잔해.
 
 async function getItem(player, monsters) {
     console.clear()
@@ -849,7 +892,7 @@ async function main(player, stage) {
                     console.clear;
                     const events = [event1, event2, event3, event4];// 여기에 이벤트 개수 추가.
                     const randomEvent = events[Math.floor(Math.random() * events.length)];
-                    progress += await randomEvent(stage, player);
+                    progress += await stageboss(stage, player);
                     validChoice = true;
                     break;
                 case '2':
