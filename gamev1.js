@@ -11,9 +11,9 @@
 // 뭐 간단하게 반격으로 해보자. 속도가 빨라지고, 반격하는. 그럼 방어가 있어야 겠네.. 아. 에효.. 반격때는 공격을 하면 안되게. 이것만 하고 끝내자.
 //보스는 내일 만들고.
 
-//.v12 진짜로 이벤트 만들것. 다만드니까 하기 싫네..
-//이벤트 만드는 도중 배틀에 플레이어 공격 선택이 2인용 이더라 ㅋㅋ
-//고치기 귀찮네..
+//.v13. 플레이어 공격선택 바꿈 이제 1,2명 됨. 아마 3명도 될듯 상점구현함. 이벤트 상점까지 총 4개임
+// 보스만 하면 될듯. 데스엔딩이랑. 버그로는 아이템 있는 상태에서 아이템 먹으면 먹어지는데 벗고 입으면 사라짐. 귀여운 버그라 놔두려나.
+
 
 
 import chalk from 'chalk';
@@ -204,6 +204,7 @@ async function event1(stage, player) {
 async function event2(stage, player) {
     const event2dialogues1 = [`당신은 던전의 길을 찾던 중. 인기척에 몸을 숨겼다.
 던전에 들어온 사람들 인가 보다.
+
 그들과 접촉하면 던전의 지리에 대해 거래를 할 수 있을지도 모른다.`];
     await showDialogue(event2dialogues1, 1000);
     console.log(`1.지나갈 때까지 기다린다. 2.대화를 시도한다. 3.선공을 한다.`)
@@ -221,7 +222,7 @@ async function event2(stage, player) {
 당신은 인기척이 없어질 때까지 기다렸다.`];
                 await showDialogue(event2dialogues1, 1000);
                 validChoice = true;
-                addprogress = 50;
+                addprogress = 5;
                 break;
             case '2':
                 console.clear;
@@ -230,6 +231,7 @@ async function event2(stage, player) {
                     const event2dialogues3 = [`상대는 당신을 보자 친절히 웃으며 인사한다.
 당신은 속으로 경계하며, 던전의 정보를 아냐고 물었고, 놀랍게도 상대는 던전의 정보에 대해 친절히 알려주고 떠났다.`];
                     await showDialogue(event2dialogues3, 1000);
+                    addprogress = 20;
                 } else {
                     const event2dialogues4 = [`상대는 당신을 보자 비릿히 웃으며 다가온다. 
 당신은 직감적으로 싸워야 함을 알았다.`]
@@ -270,11 +272,11 @@ async function event2(stage, player) {
                 let monsters = [hurtAdventurer];
                 const playerWon = await battle(stage, player, monsters);
 
-                    if (!playerWon) {
-                        gameover(stage, false); // 엔딩 2
-                    } else {
-                        addprogress = 20;
-                    }
+                if (!playerWon) {
+                    gameover(stage, false); // 엔딩 2
+                } else {
+                    addprogress = 20;
+                }
                 validChoice = true;
                 break;
             default:
@@ -282,23 +284,198 @@ async function event2(stage, player) {
         }
     }
     return addprogress;
-    //무시하고 간다. //대화를 시도한다. // 선빵필승.
 }
 
 async function event3(stage, player) {
     const event3dialogues1 = [`지다가다 구석진 곳에 상자가 있다.
         사람이 보기 힘든 곳이라 당신이 처음 발견한것 같다.`];
     await showDialogue(event3dialogues1, 1000);
+    console.log(`1.지나간다. 2.상자를 열어본다.`)
+    let addprogress = 0;
+    let validChoice = false;
+    while (!validChoice) {
+        const choice = await readlineSync.question();
 
-    //무시하고 간다.   //상자를 연다.
+        switch (choice) {
+            case '1':
+                console.clear;
+                const event3dialogues2 = [`수상한 곳에 상자가 있다는 건 함정일 가능성이 높다.
+                    
+당신은 그냥 지나가기로 했다.`];
+                await showDialogue(event3dialogues2, 1000);
+                validChoice = true;
+                addprogress = 5;
+                break;
+            case '2':
+                console.clear;
+                const randomnum = Math.random();
+                if (randomnum < 1 / 3) {
+                    const event3dialogues3 = [`상자 안에는 약간의 물품이 있었다.`];
+                    await showDialogue(event3dialogues3, 1000);
 
+                    player.gold += 100;
+                    console.log(chalk.green(`100 gold를 얻었다.`));
+
+                    const potionType = Math.random() < 0.5 ? 'HPpotion' : 'MPpotion';
+
+                    if (player.item[potionType]) {
+                        player.item[potionType] += 1;
+                    } else {
+                        player.item[potionType] = 1;
+                    }
+
+                    console.log(chalk.green(`${potionType}을 1개 얻었다.`));
+
+                    readlineSync.question('\n다음으로 넘어가기');
+                    console.clear()
+
+                    addprogress = 10;
+                } else {
+                    const event3dialogues4 = [`당신은 상자를 열어보려 손을 뻗은 순간. 
+상자에 이빨이 돋아나더니 당신에게 달려들었다.`]
+                    await showDialogue(event3dialogues4, 1000);
+
+                    let mimic = new Monster('미믹', 200, 0, 20, 20, 0, 1, 20, 1, 5, 100, 300, { HPpotion: 2, MPpotion: 1 }, { plateArmor: { name: '단단한 판금갑옷', pldef: 5, rarity: 5 } }, {
+                        slash: function () {
+                            return { skillName: "powerful bite", damage: this.atk };
+                        }
+                    });
+
+                    let monsters = [mimic];
+
+                    const playerWon = await battle(stage, player, monsters);
+
+                    if (!playerWon) {
+                        gameover(stage, false); // 엔딩 2
+                    } else {
+                        addprogress = 20;
+                    }
+                }
+                validChoice = true;
+                break;
+            default:
+            //logs.push(chalk.red('올바른 선택을 하세요.'));
+        }
+    }
+    return addprogress;
 }
 
+async function shop(player) {
+    const items = [
+        { name: 'HP 포션', type: 'item', effect: 'HPpotion', amount: 1, gold: 50 },
+        { name: 'MP 포션', type: 'item', effect: 'MPpotion', amount: 1, gold: 50 },
+        { name: '나무 갑옷', type: 'equipment', details: { name: '나무 갑옷', pldef: 2, rarity: 2 }, gold: 100 }
+    ];
+
+    while (true) {
+        items.forEach((item, index) => {
+            console.log(`${index + 1}. ${item.name} - ${item.gold} 골드`);
+        });
+        console.log(`${items.length + 1}. 나가기`);
+
+        const choice = await readlineSync.question('구매할 아이템 번호를 입력하세요: ');
+
+        if (parseInt(choice) === items.length + 1) {
+            console.log("상점을 나갑니다.");
+            break;
+        }
+
+        const selectedItem = items[parseInt(choice) - 1];
+
+        if (!selectedItem) {
+            console.log("잘못된 선택입니다.");
+            return;
+        }
+
+        if (player.gold >= selectedItem.gold) {
+            player.gold -= selectedItem.gold;
+            if (selectedItem.type === 'item') {
+                // item의 경우 'potion'을 추가
+                const potionKey = selectedItem.effect;
+                player.item[potionKey] = (player.item[potionKey] || 0) + selectedItem.amount; // 기존 값에 추가
+            } else if (selectedItem.type === 'equipment') {
+                // equipment의 경우 wear에 추가
+                player.Equipment[selectedItem.details.name] = selectedItem.details;
+            }
+            console.clear()
+            console.log(`${selectedItem.name}을(를) 구매하였습니다. 남은 골드: ${player.gold}`);
+        } else {
+            console.clear()
+            console.log("골드가 부족하여 아이템을 구매할 수 없습니다.");
+        }
+    }
+}
+
+
+
+
+
+
+
+
 async function event4(stage, player) {
-    const event4dialogues1 = [`던전을 지나던중 수상하게 생긴 사람이 말을 건다.
-        물건 사고 가시지요. 던전을 탐험하신다면 필요하실겁니다.`];
-    //상인.
+    const event4dialogues1 = [`던전을 지나 어두운 길을 따라가는 중, 갑자기 당신 앞에 수상하게 생긴 남자가 나타난다. 
+그의 옷은 낡고 먼지투성이지만, 그 눈빛은 어딘가 날카롭고 계산적이었다. 그가 입가에 미소를 띠며 말을 건다.
+
+“물건 사고 가시지요. 던전을 탐험하신다면 필요하실 겁니다.”`];
     await showDialogue(event4dialogues1, 1000);
+    console.log(`1.지나간다. 2.물건을 둘러본다. 3. 공격한다.`)
+    let addprogress = 0;
+    let validChoice = false;
+    while (!validChoice) {
+        const choice = await readlineSync.question();
+
+        switch (choice) {
+            case '1':
+                console.clear;
+                const event4dialogues2 = [`당신은 그냥 지나가기로 했다.
+                    
+남자는 미소를 지으며 어디론가 사라진다. 그의 마지막 말이 어둠 속에서 희미하게 들려온다.
+"결국 다시 찾게 될 겁니다… 그때까지 무사하시길."`];
+                await showDialogue(event4dialogues2, 1000);
+                validChoice = true;
+                addprogress = 5;
+                break;
+            case '2':
+                console.clear;
+                const event4dialogues3 = [`천천히 보시길.`];
+                await showDialogue(event4dialogues3, 1000);
+
+                await shop(player);
+
+                console.clear()
+                const event4dialogues4 = [`살펴 가십시오.`];
+                await showDialogue(event4dialogues4, 1000);
+
+                validChoice = true;
+                break;
+
+            case '3':
+                const event4dialogues5 = [`당신은 욕망에 휩사여 남자를 공격했다.`]
+                await showDialogue(event4dialogues5, 1000);
+
+                let shopkeeper = new Monster('상점주인', 100, 0, 700, 20, 0, 1, 20, 1, 5, 100, 300, { HPpotion: 2, MPpotion: 1 }, { plateArmor: { name: '단단한 판금갑옷', pldef: 5, rarity: 5 } }, {
+                    slash: function () {
+                        return { skillName: "dath", damage: this.atk };
+                    }
+                });
+
+                let monsters = [shopkeeper];
+
+                const playerWon = await battle(stage, player, monsters);
+
+                if (!playerWon) {
+                    gameover(stage, false); // 엔딩 2
+                } else {
+
+                }
+                validChoice = true;
+                break;
+            default:
+            //logs.push(chalk.red('올바른 선택을 하세요.'));
+        }
+    }
+    return addprogress;
 }
 
 async function event5(stage, player) {
@@ -334,28 +511,24 @@ async function playerAttackmethod(player, monsters) {
     while (!validChoice) {
         console.log(chalk.green(`\n1. 일반공격 2. 스킬을 사용한다.`));
         const choice = await readlineSync.question('당신의 선택은? ');
+
         switch (choice) {
             case '1': // 일반공격
-            monsters.forEach((monster, index) => {
-                console.log(chalk.green(`${index + 1}. ${monster.name}`));
-            });
-            const targetIndex = await readlineSync.question('공격할 몬스터를 선택하세요: ');
-            const target = monsters[parseInt(targetIndex) - 1];
+                // 몬스터 목록 출력
+                monsters.forEach((monster, index) => {
+                    console.log(chalk.green(`${index + 1}. ${monster.name}`));
+                });
+                const targetIndex = await readlineSync.question('공격할 몬스터를 선택하세요: ');
+                const target = monsters[parseInt(targetIndex) - 1]; // 선택한 몬스터
 
-                
-                if (target === '1' && monsters[0].hp > 0) {
+                if (target && target.hp > 0) {
                     let damage = player.attack(player.atk);
-                    const dealtDamage = await damageCalculation(player, monsters[0], damage);
-                    monsters[0].hp -= dealtDamage;
-                    validChoice = true;
-                } else if (target === '2' && monsters[1].hp > 0) {
-                    damage = player.attack(player.atk);
-                    const dealtDamage = await damageCalculation(player, monsters[1], damage);
-                    monsters[1].hp -= dealtDamage;
+                    const dealtDamage = await damageCalculation(player, target, damage);
+                    target.hp -= dealtDamage;  // 몬스터 객체의 체력을 바로 수정
                     validChoice = true;
                 } else {
                     logs.push(chalk.red('올바른 몬스터를 선택하세요.'));
-                    updateDisplay(player, monsters)
+                    updateDisplay(player, monsters);
                 }
                 break;
 
@@ -372,17 +545,15 @@ async function playerAttackmethod(player, monsters) {
                     if (player.mp >= mpCost) {
                         player.mp -= mpCost; // 마나 차감
                         console.log(chalk.green(`\n스킬이 발동되었습니다!`));
-                        console.log(chalk.green(`1. ${monsters[0].name} 2. ${monsters[1].name}`));
-                        const target = await readlineSync.question('공격할 몬스터를 선택하세요: ');
+                        monsters.forEach((monster, index) => {
+                            console.log(chalk.green(`${index + 1}. ${monster.name}`));
+                        });
+                        const targetIndex = await readlineSync.question('공격할 몬스터를 선택하세요: ');
+                        const target = monsters[parseInt(targetIndex) - 1]; // 선택한 몬스터
 
-                        let dealtDamage;
-                        if (target === '1' && monsters[0].hp > 0) {
-                            dealtDamage = await damageCalculation(player, monsters[0], damage);
-                            monsters[0].hp -= dealtDamage;
-                            validChoice = true;
-                        } else if (target === '2' && monsters[1].hp > 0) {
-                            dealtDamage = await damageCalculation(player, monsters[1], damage);
-                            monsters[1].hp -= dealtDamage;
+                        if (target && target.hp > 0) {
+                            const dealtDamage = await damageCalculation(player, target, damage);
+                            target.hp -= dealtDamage;  // 몬스터 객체의 체력을 바로 수정
                             validChoice = true;
                         } else {
                             logs.push(chalk.red('올바른 몬스터를 선택하세요.'));
@@ -397,11 +568,10 @@ async function playerAttackmethod(player, monsters) {
 
             default:
                 logs.push(chalk.red('올바른 선택을 하세요.'));
-
-                updateDisplay(player, monsters)
+                updateDisplay(player, monsters);
         }
     }
-}// 아 이거 무조건 2명용이잖아 왜 이렇게 했어. 아 초반용 시치.
+}
 
 async function monsterAttackmethod(player, monster) {
     if (monster.hp <= 0) return;
@@ -636,7 +806,7 @@ async function main(player, stage) {
             switch (choice) {
                 case '1':
                     console.clear;
-                    const events = [event2];// 여기에 이벤트 개수 추가.
+                    const events = [event1,event2,event3,event4];// 여기에 이벤트 개수 추가.
                     const randomEvent = events[Math.floor(Math.random() * events.length)];
                     progress += await randomEvent(stage, player);
                     validChoice = true;
