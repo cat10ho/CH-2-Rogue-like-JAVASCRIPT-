@@ -1,23 +1,3 @@
-//2024-11-15
-//그 뒤에는 엔딩이겠다. 아마 스테이지 1만 만들듯. 
-//그리고 보스도 만들어 보자꾸나. 보스는 특수 스킬이 있으면 좋겠다.
-// 뭐 간단하게 반격으로 해보자. 속도가 빨라지고, 반격하는. 그럼 방어가 있어야 겠네.. 아. 에효.. 반격때는 공격을 하면 안되게. 이것만 하고 끝내자.
-//보스는 내일 만들고.
-
-//방어 모드. 이거 플레이어 공격할때 리턴값이 없으니까. 방어을 선택하면 리턴값을 방어 방어를 주고. 그걸 몬스터에 넣으면 될듯.
-//흠. 근데 데미지.. 아닌가. 크리티컬
-// 아 다행이다. 데미지 공격식에서 그 방어 값을 받으면 되겠다. 그래서 방어면 방어했다 를 하면 될듯. 어짜피 방어는 플레이어만 할꺼니까~
-
-//보스 만들어 보기.
-
-//.v15. 1. 뭔가 뭔가 일어난다. 1.지금까지 스킬이 하나고 마나가 없어서 스킬을 안쓰고 있었던 것도 몰랐다.
-// -> 스킬 함수 리턴값에 마나 코스트가 있었기에 인식을 못하고 있었던 것. 마나 코스트를 밖으로 빼줬다.
-// 2. 이제 보스가 패턴도 쓴다. 뭐 그래봤자 한턴 멈췄다가 쎄게 때리는 거긴 한데. 이게 어디야~
-// 이제 스토리 다듬고 끝내면 될듯. 모든게 완벽한것 같다. 플레이서 스킬추가는 나중에 해보자. 아마 되겠는데 귀찮기도 하고. 
-
-
-
-
 import chalk from 'chalk';
 import readlineSync from 'readline-sync';
 
@@ -56,7 +36,7 @@ class Player {
     attack(atk) {
         return atk
     }
-}
+} //플레이어 클래스
 
 class Monster {
     constructor(name, hp = 100, mp = 100, atk = 10, def = 5, dodge = 5, speed = 2, critical = 20, level = 0, exp = 0, hit = 95, gold = 0, item = {}, Equipment = {}, skills = {}) {
@@ -76,12 +56,12 @@ class Monster {
         this.Equipment = Equipment
         this.skills = skills; // 몬스터가 배울 스킬들
     }
-}
+} //몬스터 클래스.
 
 function isHit(attacker, defender) {
     const hitChance = Math.random() * 100;
     return hitChance <= attacker.hit - defender.dodge;
-}//
+}// 빗나감 계산 함수.
 
 async function damageCalculation(attacker, defender, damage) {
     if (!isHit(attacker, defender)) {
@@ -100,14 +80,14 @@ ${defender.name}에게 ${AttackDamage}의 데미지!`));
         }
         return AttackDamage;
     }
-}//
+}//데미지 계산 함수. 적중율에 따라 빗나감.
 
 async function createName() {
     console.clear();
     console.log('이름을 입력해 주세요.')
     let name = readlineSync.question('입력: ');
     return name;
-};//
+};// 이름 넣는 함수. 히로인 넣을때 추가하려 했는데 일주일은 너무 짧다.
 
 function showDialogue(dialogues, delay = 1000) {
     return new Promise(async (resolve) => {
@@ -119,7 +99,7 @@ function showDialogue(dialogues, delay = 1000) {
         readlineSync.question('\n 다음으로 넘어가기.');
         resolve();
     });
-}//
+}// 대사 나오고 아무키 누르면 넘어가는 함수. 너무 오래전에 만들어서 정확히는 기억이 안남 ㅋㅋ
 
 async function intro() {
     const dialogues1 = [`당신은 깊은 숨을 내쉬며, 던전의 입구 앞에 섰다.
@@ -151,7 +131,48 @@ async function intro() {
     await showDialogue(dialogues2, 1000);
     await showDialogue(dialogues3, 1000);
     await showDialogue(dialogues4, 1000);
-}//
+}//인트로
+
+async function gameover(stage) {
+   const gameoverdialogues1 =[
+    `전투에서 패배한 당신은 결국 쓰러지고 말았다. 
+    
+던전의 어두운 구석에 쓰러진 당신의 목표는 무너져 버렸고, 
+그 흔적조차 사라져버렸다. 이제 던전은 당신의 마지막 집이 되었고, 
+당신을 기억해줄 사람도 없을 것이다. 
+그저 던전의 한 부분으로, 어둠 속에 묻힌 채 끝이 난다.`
+];
+
+   await showDialogue(gameoverdialogues1,1000)
+   process.exit(); 
+}//게임오버
+
+async function gameend(stage){
+    const gameenddialogues1 =[
+        `골렘은 육중한 소리를 내며 무너져 내렸고, 그 뒤로 숨겨져 있던 계단이 모습을 드러냈다. 
+계단은 마치 악몽 속에서 본 듯한 불길한 어둠에 휩싸여 있었고, 그 끝이 어디로 이어지는지 알 수 없었다.
+`];
+const gameenddialogues2 =[
+    `하지만 당신은 한 치의 망설임도 없이 앞으로 나아간다. 
+이 여정을 시작할 때부터 각오했던 바였다. 어떤 적이 나타나더라도, 어떤 고난이 기다리고 있더라도 당신은 멈추지 않을 것이다.
+`];
+
+const gameenddialogues3 =[
+    `최하층에 숨겨진 소원을 이루어줄 보물이 있다는 전설을 가슴에 새기며, 
+당신은 천천히 그러나 결연한 발걸음으로 계단을 내려가기 시작한다. 깊어지는 어둠 속으로 한 걸음 한 걸음 나아가는 당신의 결의는 더욱 단단해져만 갔다.
+`];
+
+const gameenddialogues4 =[
+    `플레이 해주셔서 감사합니다.
+`];
+
+    
+       await showDialogue(gameenddialogues1,1000);
+       await showDialogue(gameenddialogues2,1000);
+       await showDialogue(gameenddialogues3,1000);
+       await showDialogue(gameenddialogues4,1000);
+       process.exit(); 
+}//엔딩
 
 async function event1(stage, player) {
 
@@ -195,12 +216,12 @@ async function event1(stage, player) {
     const playerWon = await battle(stage, player, monsters);
 
     if (!playerWon) {
-        gameover(stage, false); // 엔딩 1
+        await gameover(stage);
     } else {
-        addprogress = 50;
+        addprogress = 20;
     }
     return addprogress;
-}
+}// 습격 이벤트
 
 async function event2(stage, player) {
     const event2dialogues1 = [`당신은 던전의 길을 찾던 중. 인기척에 몸을 숨겼다.
@@ -252,7 +273,7 @@ async function event2(stage, player) {
                     const playerWon = await battle(stage, player, monsters);
 
                     if (!playerWon) {
-                        gameover(stage, false); // 엔딩 2
+                        await gameover(stage);  // 엔딩 2
                     } else {
                         addprogress = 20;
                     }
@@ -279,7 +300,7 @@ async function event2(stage, player) {
                 const playerWon = await battle(stage, player, monsters);
 
                 if (!playerWon) {
-                    gameover(stage, false); // 엔딩 2
+                    await gameover(stage); // 엔딩 2
                 } else {
                     addprogress = 20;
                 }
@@ -290,7 +311,7 @@ async function event2(stage, player) {
         }
     }
     return addprogress;
-}
+}//지나가는 모험가 이벤트.
 
 async function event3(stage, player) {
     const event3dialogues1 = [`지다가다 구석진 곳에 상자가 있다.
@@ -355,7 +376,7 @@ async function event3(stage, player) {
                     const playerWon = await battle(stage, player, monsters);
 
                     if (!playerWon) {
-                        gameover(stage, false); // 엔딩 2
+                        await gameover(stage);
                     } else {
                         addprogress = 20;
                     }
@@ -367,14 +388,14 @@ async function event3(stage, player) {
         }
     }
     return addprogress;
-}
+} //미믹 이벤트 별거 없다.
 
 async function shop(player) {
     const items = [
         { name: 'HP 포션', type: 'item', effect: 'HPpotion', amount: 1, gold: 50 },
         { name: 'MP 포션', type: 'item', effect: 'MPpotion', amount: 1, gold: 50 },
         { name: '나무 갑옷', type: 'equipment', details: { name: '나무 갑옷', pldef: 2, rarity: 2 }, gold: 100 }
-    ];
+    ]; //판매 물품 배열.
 
     while (true) {
         items.forEach((item, index) => {
@@ -398,12 +419,11 @@ async function shop(player) {
 
         if (player.gold >= selectedItem.gold) {
             player.gold -= selectedItem.gold;
-            if (selectedItem.type === 'item') {
+            if (selectedItem.type === 'item') {// 아이템일때.
                 const potionKey = selectedItem.effect;
                 player.item[potionKey] = (player.item[potionKey] || 0) + selectedItem.amount; // 기존 값에 추가
-            } else if (selectedItem.type === 'equipment') {
-                // equipment의 경우 wear에 추가
-                player.Equipment[selectedItem.details.name] = selectedItem.details;
+            } else if (selectedItem.type === 'equipment') {//장비일때.
+                player.Equipment[selectedItem.details.name] = selectedItem.details; //장비칸에 추가.
             }
             console.clear()
             console.log(`${selectedItem.name}을(를) 구매하였습니다. 남은 골드: ${player.gold}`);
@@ -412,14 +432,7 @@ async function shop(player) {
             console.log("골드가 부족하여 아이템을 구매할 수 없습니다.");
         }
     }
-}
-
-
-
-
-
-
-
+} //물건을 사는 이벤트. 물건은 추가할 수 있긴 한데. 일단 아이템과 장비만.
 
 async function event4(stage, player) {
     const event4dialogues1 = [`던전을 지나 어두운 길을 따라가는 중, 갑자기 당신 앞에 수상하게 생긴 남자가 나타난다. 
@@ -475,9 +488,9 @@ async function event4(stage, player) {
                 const playerWon = await battle(stage, player, monsters);
 
                 if (!playerWon) {
-                    gameover(stage, false); // 엔딩 2
+                    await gameover(stage);
                 } else {
-
+                    addprogress = 50;
                 }
                 validChoice = true;
                 break;
@@ -486,13 +499,34 @@ async function event4(stage, player) {
         }
     }
     return addprogress;
-}
+}// 상인 이벤트. 물건을 살 수 있다. 
 
 async function stageboss(stage, player) {
-    const bossdialogues1 = [`보스 몬스터를 발견했다.`];
-    await showDialogue(bossdialogues1, 1000);
+    const bossdialogues1 = [`당신은 던전 깊숙한 곳으로 향하던 중, 갑자기 거대한 구조물을 발견한다. 
+그 구조물은 마치 이 던전의 오랜 비밀을 숨기고 있는 듯한 인상을 준다. 
+구조물 뒤에는 보물을 향한 마지막 단서처럼, 더 깊은 곳으로 내려갈 수 있는 계단이 있다.`];
 
-    let stage1boss = new Monster('보스', 500, 0, 10, 20, 0, 5, 0, 1, 5, 100, 500, { HPpotion: 2, MPpotion: 1 }, { plateArmor: { name: '강력한 갑옷', pldef: 10, rarity: 5 } }, {
+    const bossdialogues2 =[`당신은 목표를 되새기며 그 계단을 향해 한 걸음씩 다가간다. 
+소원을 이루어줄 보물이 기다리고 있는 그곳으로. 
+그러나, 계단 앞에 다다르려는 순간, 구조물이 갑자기 움직이기 시작한다.`];
+
+    const bossdialogues3 =[`그 구조물은 골렘이었다. 거대한 몸체와 날카로운 돌로 이루어진 골렘은 
+침입자를 막기 위해 일어섰고, 그 몸에서 흘러나오는 차가운 기운은 
+마치 던전의 모든 어둠을 품고 있는 듯하다. `];
+
+    const bossdialogues4 =[`당신은 이 싸움이 결코 쉬운 싸움이 아님을 직감한다.
+그러나 당신은 자신의 목표를 상기하며, 마음속에 굳은 결심을 다진다.
+         
+골렘은 무시무시한 속도로 다가오며, 땅을 울리며 발걸음을 내디딘다. 
+당신은 숨을 깊이 들이쉬며, 단단히 고정된 발을 뗀다.`];
+
+
+    await showDialogue(bossdialogues1, 1000);
+    await showDialogue(bossdialogues2, 1000);
+    await showDialogue(bossdialogues3, 1000);
+    await showDialogue(bossdialogues4, 1000);
+
+    let stage1boss = new Monster('골렘', 500, 0, 10, 20, 0, 5, 0, 1, 5, 100, 500, { HPpotion: 2, MPpotion: 1 }, { plateArmor: { name: '강력한 갑옷', pldef: 10, rarity: 5 } }, {
 
         attack: {
             mpCost: 0,
@@ -526,22 +560,26 @@ async function stageboss(stage, player) {
 
     const playerWon = await battle(stage, player, monsters);
 
+    if (!playerWon) {
+        await gameover(stage); // 엔딩 1
+    } else {
+        await gameend(stage);
+    }
+    return addprogress;
 
 
-}
-
-
+} //보스 이벤트임. 끝나면 엔딩.
 
 function updateDisplay(player, monsters) {
     console.clear();
     console.log(`Player: ${player.name}, HP: ${player.hp},  MP: ${player.mp}`);
     monsters.forEach((monster, index) => {
-        console.log(`Monster ${index + 1}: ${monster.name}, HP: ${monster.hp}`);
+        console.log(`Monster ${index + 1}: ${monster.name}, HP: ${monster.hp}, MP: ${monster.mp}`);
     });
 
-    while (logs.length > 10) { logs.shift() };
+    while (logs.length > 4) { logs.shift() };
     logs.forEach((log) => console.log(log));
-}
+} //전투용 창 적 정보가 보인다.
 
 function playereDisplay(player) {
     console.clear();
@@ -549,40 +587,39 @@ function playereDisplay(player) {
     console.log(`Player: ${player.name}, HP: ${player.hp}, MP: ${player.mp}, def:${player.def},
        착용중인 장비: ${wearItemName} gold: ${player.gold} `);
 
-    while (logs.length > 10) { logs.shift() };
+    while (logs.length > 4) { logs.shift() };
     logs.forEach((log) => console.log(log));
-}//
+}// 플레이어 창. 메인 화면에 띄우는 용도.
 
 async function playerAttackmethod(player, monsters) {
 
-    let validChoice = false; //옳은 선택지 넣으면 바뀜
+    let validChoice = false; //while을 위한 변수 옳은 선택을 하면 ture로 바뀌면서 탈출함.
     while (!validChoice) {
         console.log(chalk.green(`\n1. 일반공격 2. 스킬을 사용한다. 3. 방어`));
         const choice = await readlineSync.question('당신의 선택은? ');
 
-        switch (choice) {
-            case '1': // 일반공격
-                // 몬스터 목록 출력
+        switch (choice) {//공격 방식 선택.
+            case '1': 
                 monsters.forEach((monster, index) => {
                     console.log(chalk.green(`${index + 1}. ${monster.name}`));
-                });
+                });// 몬스터 배열만큼 나옴.
                 const targetIndex = await readlineSync.question('공격할 몬스터를 선택하세요: ');
-                const target = monsters[parseInt(targetIndex) - 1]; // 선택한 몬스터
+                const target = monsters[parseInt(targetIndex) - 1]; // 공격할 몬스터 선택.
 
                 if (target && target.hp > 0) {
                     let damage = player.attack(player.atk);
-                    const dealtDamage = await damageCalculation(player, target, damage);
-                    target.hp -= dealtDamage;  // 몬스터 객체의 체력을 바로 수정
-                    validChoice = true;
-                    return false;
+                    const dealtDamage = await damageCalculation(player, target, damage); //데미지 계산 함수로 계산.
+                    target.hp -= dealtDamage; //몬스터 체력 즉시 까기.
+                    validChoice = true; //탈출.
+                    return false; //이건 방어 안하면 무조건 false 나오게 함.
                 } else {
                     logs.push(chalk.red('올바른 몬스터를 선택하세요.'));
-                    updateDisplay(player, monsters);
+                    updateDisplay(player, monsters); //화면 갱신. 다시 올라가니까. 위에 경고문 뛰우려면 이렇게 해야함.
                 }
                 break;
 
             case '2': // 스킬 사용
-                const skillList = Object.keys(player.skills).map((skill, index) => `${index + 1}. ${skill}`).join(' ');
+                const skillList = Object.keys(player.skills).map((skill, index) => `${index + 1}. ${skill}`).join(' '); // 스킬수 만큼 전개.
                 console.log(chalk.green(`\n스킬 선택: ${skillList}`));
                 const skillChoice = await readlineSync.question('사용할 스킬을 선택하세요 (번호): ');
 
@@ -602,79 +639,80 @@ async function playerAttackmethod(player, monsters) {
 
                         if (target && target.hp > 0) {
                             const dealtDamage = await damageCalculation(player, target, damage);
-                            target.hp -= dealtDamage;  // 몬스터 객체의 체력을 바로 수정
+                            target.hp -= dealtDamage;  //몬스터 체력 즉시 까기.
                             validChoice = true;
-                            return false;
+                            return false;//방어하면 트루
                         } else {
                             logs.push(chalk.red('올바른 몬스터를 선택하세요.'));
+                            updateDisplay(player, monsters);
                         }
                     } else {
                         logs.push(chalk.red('마나가 부족합니다.'));
+                        updateDisplay(player, monsters);
                     }
                 } else {
                     logs.push(chalk.red('잘못된 번호입니다.'));
+                    updateDisplay(player, monsters);
                 }
                 break;
 
             case '3': //방어. 
                 logs.push(chalk.red('당신은 방어를 시도했다.'));
                 validChoice = true;
-                return true
+                return true; //방어하면 트루
 
             default:
                 logs.push(chalk.red('올바른 선택을 하세요.'));
                 updateDisplay(player, monsters);
         }
     }
-}
-
+}// 플레이어가 공격하는 대상을 정하고, 공격하는 방식도 정하는 함수. 적과 플레이어의 스킬이 추가되도 선택이 가능하다.
 
 async function monsterAttackmethod(player, monster, defenseattempt) {
     if (monster.hp <= 0) return;
 
     let selectedSkill;
-    const skillNames = monster.skills ? Object.keys(monster.skills) : [];
-    const skillsWithManaCost = skillNames.filter(skill => monster.skills[skill].mpCost > 0);
-    const skillsWithoutManaCost = skillNames.filter(skill => monster.skills[skill].mpCost === 0);
+    const skillNames = monster.skills ? Object.keys(monster.skills) : []; //monster.skills의 키를 가진 객체를 만듬. 없으면 뭐 없는거 생성해서 밑에 기본공격함. 
+    const skillsWithManaCost = skillNames.filter(skill => monster.skills[skill].mpCost > 0); //마나코스트 1이상인거 구별
+    const skillsWithoutManaCost = skillNames.filter(skill => monster.skills[skill].mpCost === 0); // 0인거 구별
 
-    // 마나 코스트가 있는 스킬 우선 시도
     if (skillsWithManaCost.length > 0) {
-        const sortedSkills = skillsWithManaCost.sort((a, b) => monster.skills[b].mpCost - monster.skills[a].mpCost);
-        for (const skillName of sortedSkills) {
-            const skill = monster.skills[skillName];
+        const sortedSkills = skillsWithManaCost.sort((a, b) => monster.skills[b].mpCost - monster.skills[a].mpCost); //마나 코스트 높은대로 배열.
+        for (const skillName of sortedSkills) { //높은것중 쓸수있는거 먼저 사용.
+            const skill = monster.skills[skillName]; 
             if (monster.mp >= skill.mpCost) {
                 selectedSkill = skill;
-                break; // 마나가 충분한 첫 번째 스킬 사용
+                break;
             }
         }
     }
 
-    if (!selectedSkill && skillsWithoutManaCost.length > 0) {
+    if (!selectedSkill && skillsWithoutManaCost.length > 0) { //못쓰면 여기까지 내려와서 무작위로 사용.
         const randomIndex = Math.floor(Math.random() * skillsWithoutManaCost.length);
         selectedSkill = monster.skills[skillsWithoutManaCost[randomIndex]];
     }
 
-    let damage;
+    let damage; //이제 데미지 계산.
     if (selectedSkill) {
-        const skillResult = selectedSkill.execute.call(monster); 
-        damage = skillResult.damage;
+        const skillResult = selectedSkill.execute.call(monster); //함수 불러보기. 이름, 데미지 마나소모 가져옴.
+        skillResult.mpCost = selectedSkill.mpCost; //이건 그냥 따로있는 마나소모임. 이거 정해줘야 하드라. 데미지는 가져오는거 같은데..
+        damage = skillResult.damage;// 스킬에 있는 데미지 넣기.
+
+    
         if (skillResult.mpCost > 0) {
-            monster.mp -= skillResult.mpCost; 
+            monster.mp -= skillResult.mpCost; //마나 코스트가 있으면 빼주기.
         }
     } else {
-        damage = monster.atk;
+        damage = monster.atk; //아니면 기본공격 ->이건 위에 selectedSkill이 없을때. 그니까 스킬이 없으면  하는 기본공격임.
     }
 
-    // 방어 성공 여부 확인
     if (defenseattempt) {
         logs.push(chalk.green('방어에 성공했다. 몬스터의 공격을 막았다.'));
-        return;
+        return; //방어선공하면 그냥 여기서 나감. 데미지는 계산 안하는것.
     }
-
-    // 피해 계산
-    const dealtDamage = await damageCalculation(monster, player, damage);
-    player.hp -= dealtDamage;
-}// 아 리턴값에 마나코스트가 있어서 애가 못본거임 해결 ㅋㅋ 아. 이건 뭐.. 근데 이러니까 플레이어 스킬이 또.. 뭐 작동되잖아 한잔해.
+    const dealtDamage = await damageCalculation(monster, player, damage); //데미지 계산함수.
+    player.hp -= dealtDamage;//데미지 넣기.
+}// 몬스터 공격방식임. 마나를 사용하는 스킬을 먼저 시도하고, 안되면 안쓰는 스킬중 무작위로 사용.
 
 async function getItem(player, monsters) {
     console.clear()
@@ -713,21 +751,20 @@ async function getItem(player, monsters) {
         console.clear()
     });
 
-}//
+}//아이템과 장비를 획득하는 함수. 장비는 중복이면 안얻음. 
 
 async function battle(stage, player, monsters) {
-    const orderOfBattle = [{ ...player, type: 'player' }];
+    const orderOfBattle = [{ ...player, type: 'player' }]; //플레이어 타입 추가.
 
-    let defenseattempt = false;
+    let defenseattempt = false; //방어 하면 트루로 바뀜.
 
-    // 원본 monsters 배열의 각 객체에 직접 type 속성을 추가
     monsters.forEach(monster => {
         monster.type = 'monster';
         orderOfBattle.push(monster);
-    });
+    }); //각 객체에 몬스터 타입 추가
 
-    while (player.hp > 0 && monsters.some(monster => monster.hp > 0)) { // 몬스터가 살아있는 동안
-        updateDisplay(player, monsters);
+    while (player.hp > 0 && monsters.some(monster => monster.hp > 0)) { //플레이어가 살아있고, 몬스터도 하나라도 살아있으면 반복.
+        updateDisplay(player, monsters); //전투 전용창. 위에 나옴.
 
         orderOfBattle.sort((a, b) => {
             if (b.speed === a.speed) {
@@ -739,13 +776,13 @@ async function battle(stage, player, monsters) {
         for (let i = 0; i < orderOfBattle.length; i++) {
             const unit = orderOfBattle[i];
             if (unit.type === 'player' && unit.hp > 0) {
-                defenseattempt = await playerAttackmethod(player, monsters); // 플레이어 공격 처리
+                defenseattempt = await playerAttackmethod(player, monsters); // 플레이어 공격 처리 이때 방어하면 트루로.
             } else if (unit.type === 'monster' && unit.hp > 0) {
-                await monsterAttackmethod(player, unit, defenseattempt); //몬스터 공격 처리
+                await monsterAttackmethod(player, unit, defenseattempt); //몬스터 공격 처리 방어했다면 데미지0임. 근데 속도 느리면 맞음.
             }
         }
 
-        defenseattempt = false;
+        defenseattempt = false; //다시 방어 모드 풀기.
 
     }
 
@@ -757,18 +794,22 @@ async function battle(stage, player, monsters) {
         return true;
     }
 
-}// 
+}// 전투 함수. 플레이어와 몬스터 배열을 넣고(스테이지는 추가하려다 귀찮아서 놔둠.) 속도에 따라 순서를 정하고 공격이 진행된다
+//플레이어는 공격방식을 선택하고 데미지를 주는 layerAttackmethod(player, monsters)함수로 가고
+//몬스터는 자신이 가진 스킬을 사용하는걸 선택하는 함수인 monsterAttackmethod(player, monster, defenseattempt) 를 통해 
+//공격한다. 이때 방어를 사용하면 데미지를 입지 않는다. 
+//다 끝나면 몬스터가 지닌 아이템과 장비를 획득하며 아이템은 100확율로, 장비는 레어도에 따라 획득함.
 
 async function useItem(player, itemName) {
     if (player.item[itemName] > 0) {
         switch (itemName) {
             case 'HPpotion':
-                player.hp = Math.min(player.hp + 50, 100);
+                player.hp = Math.min(player.hp + 50, 100); // 최대 100까지만.
                 player.item[itemName]--;
                 logs.push(chalk.green(`${player.name} 의 hp가 회복됬다.`));
                 break;
             case 'MPpotion':
-                player.hp = Math.min(player.mp + 50, 100);
+                player.hp = Math.min(player.mp + 50, 100); 
                 player.item[itemName]--;
                 logs.push(chalk.green(`${player.name} 의 mp가 회복됬다.`));
                 break;
@@ -776,7 +817,7 @@ async function useItem(player, itemName) {
     } else {
         logs.push(chalk.red(`아이템 없음.`));
     }
-}//
+}// 아이템을 사용하는 함수. hp와 mp뿐이지만 다른것도 추가 가능하다.
 
 async function itemstage(player) {
 
@@ -786,62 +827,63 @@ async function itemstage(player) {
 
         const items = Object.keys(player.item);
         const itemList = items.map((item, index) => `${index + 1}. ${item} (x${player.item[item]})`).join(' ') + ` ${items.length + 1}. 되돌아 가기`;
+        //선택창 만드는거. 밑의 장비와 같다.
         console.log(chalk.green(`\n아이템 선택: ${itemList}`));
 
-        const itemNumber = parseInt(await readlineSync.question('사용할 아이템을 선택해 주세요: '), 10);
+        const itemNumber = parseInt(await readlineSync.question('사용할 아이템을 선택해 주세요: '), 10); //문자열을 정수로 바꾸는거임. 10진법
 
         if (itemNumber === items.length + 1) {
-            break;
+            break; //나가기.
         }
 
-        const itemName = items[itemNumber - 1];
+        const itemName = items[itemNumber - 1]; //아이템 배열 확인해서 이름넣어주기.
 
         if (itemName) {
-            await useItem(player, itemName);
+            await useItem(player, itemName); //아이템 사용창으로.
         } else {
             logs.push(chalk.red("잘못된 선택입니다. 다시 선택해 주세요."));
             console.clear();
         }
     }
-    logs = [];
-}//
+    logs = []; //로그 초기화.
+}// 아이템을 보고 사용할수 있는 함수인 useItem 창으로 갈수 있다.
 
 async function clothEquipment(player) {
-    const equipment = Object.keys(player.wear)[0];
+    const equipment = Object.keys(player.wear)[0];//칸은 하나니까~
     if (!equipment) {
-        logs.push(chalk.red('벗을 장비가 없습니다.'));
+        logs.push(chalk.red('벗을 장비가 없습니다.'));//당연히 없으면 안벗는다. 근데 벗기창 안만들어서 이거 쓸일은 없음.
     } else {
         const item = player.wear[equipment];
         player.def -= item.pldef;
 
         player.Equipment[equipment] = item;
 
-        delete player.wear[equipment];
+        delete player.wear[equipment]; //장비를 벗는 함수와 메커니즘은 같다.
 
         logs.push(chalk.red(`${item.name}을 벗었습니다. 방어력이 ${item.pldef}만큼 감소했습니다.`));
     }
 
 
-}//
+}// 장비를 벗는 함수.
 
 async function useEquipment(player, EquipmentName) {
     if (player.Equipment[EquipmentName]) {
-        if (Object.keys(player.wear).length > 0) {
-            await clothEquipment(player);
+        if (Object.keys(player.wear).length > 0) { //만약 착용중인 장비가 있다면~~
+            await clothEquipment(player);//장비 벗기 함수를 실행.
         }
 
-        const newItem = player.Equipment[EquipmentName];
+        const newItem = player.Equipment[EquipmentName]; //장비창의 장비를 참조.
 
-        player.def += newItem.pldef;
-        player.wear[EquipmentName] = newItem;
+        player.def += newItem.pldef; //올려주고
+        player.wear[EquipmentName] = newItem; //장비창에 착용
 
-        delete player.Equipment[EquipmentName];
+        delete player.Equipment[EquipmentName]; //그리고 삭제.
 
         logs.push(chalk.green(`${newItem.name}을 착용했습니다. 방어력이 ${newItem.pldef}만큼 증가했습니다.`));
     } else {
         logs.push(chalk.red("해당 장비가 없습니다."));
     }
-}//
+}// 장비를 입는 합수로 먼저 벋는 함수인 clothEquipment을 통해 장비를 벋고 착용한다.
 
 async function Equipmentstage(player) {
 
@@ -850,29 +892,30 @@ async function Equipmentstage(player) {
     while (true) {
         playereDisplay(player)
 
-        const Equipments = Object.keys(player.Equipment);
+        const Equipments = Object.keys(player.Equipment); // 플레이어가 가진 장비의 키값을 가진 배열 생성.      공백을 기중으로 하나의 문자열로 합치는 조인.
         const EquipmentList = Equipments.map((name, index) => `${index + 1}. ${player.Equipment[name].name}`).join(' ') + ` ${Equipments.length + 1}. 되돌아 가기`;
+        //위에 만든 배열을 맵을 통해 이름과 인덱스에 대한 문자열 생성. ^번호붙히는거. 0번부터 시작.  ^애는 장비. 동적으로 추가되므로 []표기법 사용.(정확히는 모르겠네..) 끝에는 되돌아가기 추가.
         console.log(chalk.green(`\n아이템 선택: ${EquipmentList}`));
 
         const EquipmentNumber = parseInt(await readlineSync.question('사용할 아이템을 선택해 주세요: '), 10);
 
         if (EquipmentNumber === Equipments.length + 1) {
-            break;
+            break;//나가기 선택
         }
 
         const EquipmentName = Equipments[EquipmentNumber - 1];
 
         if (EquipmentName) {
             console.clear();
-            await useEquipment(player, EquipmentName);
+            await useEquipment(player, EquipmentName);// 장비착용 함수로.
 
         } else {
             logs.push(chalk.red("잘못된 선택입니다. 다시 선택해 주세요."));
             console.clear();
         }
     }
-    logs = [];
-}//
+    logs = [];//로그 초기화. 이건 함수 공간에서 나가면. 한번씩 해줘야함. 함수 공간이 .. 그 장비공간, 아이템공간, 배틀공간 같은 큼지막한 함수 말하는거.
+}//장비를 보고 입는 함수인 useEquipment로 향하는 함수. 
 
 async function main(player, stage) {
     let progress = 0;
@@ -883,30 +926,29 @@ async function main(player, stage) {
         console.log(`탐험도 : ${progress}`);
         console.log(`1.길을 찾는다. 2.아이템을 사용한다. 3.장비를 변경한다.`)
 
-        let validChoice = false;
+        let validChoice = false; //와일문 반복을 위한 변수.
         while (!validChoice) {
             const choice = await readlineSync.question();
 
             switch (choice) {
                 case '1':
                     console.clear;
-                    const events = [event1, event2, event3, event4];// 여기에 이벤트 개수 추가.
-                    const randomEvent = events[Math.floor(Math.random() * events.length)];
-                    progress += await stageboss(stage, player);
-                    validChoice = true;
+                    const events = [event1,event2,event3,event4];// 여기에 이벤트 개수 추가.
+                    const randomEvent = events[Math.floor(Math.random() * events.length)];//이벤트길이만큼 1~0변수를 곱하고 나온 1~4숫자를 이벤트 함수로 뽑는것.
+                    progress += await randomEvent(stage, player);
+                    validChoice = true; //whle문 깨짐.
                     break;
                 case '2':
                     console.clear;
-                    await itemstage(player)
+                    await itemstage(player) //아이템창으로.
                     validChoice = true;
                     break;
                 case '3':
                     console.clear;
-                    await Equipmentstage(player)
+                    await Equipmentstage(player) //장비창으로.
                     validChoice = true;
                     break;
                 default:
-                //logs.push(chalk.red('올바른 선택을 하세요.'));
             }
         }
     }
@@ -945,7 +987,9 @@ async function main(player, stage) {
             }
         }
     }
-} //
+
+
+} // 이곳에서 이벤트, 아이템창, 장비창으로 갈수 있다. 또한 진척도가 100이면 보스이벤트를 한다.
 
 export async function startGame() {
     let name;
@@ -956,10 +1000,9 @@ export async function startGame() {
     let progress = 0;
     logs = [];
     main(player, stage, progress);
-} //
+} // 게임을 시작하고, 플레이어를 새로 만듬. 진척도와 스테이지를 받는다. main함수로 간다. (세이브 만들려고 한 흔적임.)
 
 startGame()
-
 
 
 
